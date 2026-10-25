@@ -1,0 +1,28 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+/docs/superpowers/
+.DS_Store
+/build
+*/build
+.cxx
+Captures
+
+# Documentos e materiais de trabalho locais
+/docs/publication-review.md
+/docs/source-provenance-review.md
+/docs/plans/
+/docs/artwork-proposals/
+/docs/artwork/
+
+# Binários e credenciais locais
+*.apk
+*.aab
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+/key.properties
+/keystore.properties

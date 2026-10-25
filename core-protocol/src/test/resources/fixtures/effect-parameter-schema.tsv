@@ -1,0 +1,306 @@
+# GP-200 Windows 1.8.1 algorithm.xml factual schema: ID, module, ordered wire IDs, Sync>bound wire IDs, ordered names. Resolve Knob.bind to Power switch (source mixes idx/ID).
+0	PRE	0,1	-	Sustain|Volume
+1	PRE	0,1,2,3	-	Sustain|Attack|Volume|Clipping
+3	PRE	0,1,2,3,4,5,6	-	Threshold|Ratio|Volume|Attack|Release|Tone|Blend
+20	DST	0	-	Gain
+10	DST	0,1,2,3	-	Gain|Volume|Bass|Treble
+11	DST	0,1,2,3	-	Gain|Volume|Bass|Treble
+12	DST	0,1,2,3	-	Gain|Volume|Bass|Treble
+14	DST	0	-	Gain
+25	DST	0,1,2,3	-	Bass|Treble|Volume|Low Cut
+26	DST	0,1,2	-	Gain|+3dB|Bright
+50331649	DST	0,1,2	-	Gain|Tone|Volume
+50331650	DST	0,1	-	Gain|Volume
+50331668	DST	0,1,2	-	Gain|Tone|Volume
+50331654	DST	0,1,2	-	Gain|Tone|Volume
+50331657	DST	0,1,2	-	Gain|Tone|Volume
+16777216	PRE	0	-	Shape
+16777217	PRE	0,1,2,3	-	Body|Top|Volume|Mode
+16777231	PRE	0,1,2,3,4	-	Sense|Range|Q|Mix|Mode
+16777237	PRE	0,1,2,3,4,5,6	6>1	Depth|Rate|Volume|Low|Q|High|Sync
+16777241	PRE	0,1,2,3,4,5	5>4	Step 1|Step 2|Step 3|Step 4|Rate|Sync
+16777249	PRE	0,1,2	-	Low Oct|High Oct|Dry
+16777251	PRE	0,1,2,4,5	-	Hi Pitch|Low Pitch|Dry|Hi Vol|Low Vol
+16777252	PRE	0,1,2,3,4	-	Hi Pitch|Low Pitch|Wet|Dry|Range
+16777289	WAH	0,1,2,3	-	Range|Harmony|Volume|Position
+16777293	PRE	0,1,2,3,5	-	Mix|Key|Mode|Interval|Smooth Mode
+16777294	PRE	0,1,2,3,4,6	-	Mix|Key|Mode|Interval 1|Interval 2|Smooth Mode
+16777263	PRE	0,1,2,3	-	Mix|Freq|Fine|Tone
+16777267	PRE	0,1,2,3	-	Saturation|Mix|Volume|High Cut
+67108909	MOD	0,1	-	Attack|Curve
+67108911	MOD	0,1	-	Volume|Activate
+67108912	MOD	0,1,2,3	-	Volume|Attack|Release|Activate
+83886081	WAH	0,1,2,3	-	Range|Q|Volume|Position
+83886088	WAH	0,1,2,3	-	Range|Q|Volume|Position
+83886090	WAH	0,1,2,3,4	-	Range|Q|Volume|Position|EQ
+83886086	WAH	0,1,2,3	-	Range|Q|Volume|Position
+83886087	WAH	0,1,2,3	-	Range|Q|Volume|Position
+50331648	DST	0,1,2	-	Gain|Tone|Volume
+50331652	DST	0,1,2	-	Gain|Tone|Volume
+50331656	DST	0,1,2,3,4	-	Gain|Tone|Volume|Fat|Air
+50331658	DST	0,1,2,3	-	Gain|Tone|Volume|Mode
+50331659	DST	0,1,2,3	-	Gain|Volume|Bass|Treble
+50331662	DST	0,1,2	-	Gain|Tone|Volume
+50331663	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+50331664	DST	0,1,2,3	-	Gain|Tone|Volume|Voice
+50331678	DST	0,1,2,3,4	-	Gain|Volume|Bass|Treble|Mode
+50331676	DST	0,1,2,3,4	-	Gain|Tone|Volume|Attack|Gate
+50331728	DST	0,1,2,3	-	Gain|Tone|Volume|Mode
+50331682	DST	0,1,2	-	Sustain|Tone|Volume
+50331684	DST	0,1	-	Fuzz|Volume
+50331686	DST	0,1	-	Fuzz|Volume
+50331689	DST	0,1	-	Gain|Volume
+50331690	DST	0,1,2	-	Gain|Tone|Volume
+50331691	DST	0,1,2	-	Gain|Filter|Volume
+50331693	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+50331694	DST	0,1,2,3,4	-	Gain|Volume|Bass|Contour|Treble
+50331696	DST	0,1,2	-	Gain|Tone|Volume
+50331698	DST	0,1,2,3	-	Gain|Tone|Volume|Mode
+50331730	DST	0,1,2,3,4,5	-	Gain|Volume|Bass|Treble|Presence|Tight
+50331711	DST	0,1,2,3,4	-	Gain|Tone|Volume|Mode|Blend
+50331712	DST	0,1,2,3,4	-	Gain|Blend|Volume|Bass|Treble
+50331716	DST	0,1,2,3,4,6,8,9	-	Gain|Blend|Volume|Low|Lo-mid|Hi-mid|Treble|Attack
+50331729	DST	0,1,2,3,4,5,6	-	Gain|Master|Bass|Middle|Mid Freq|Treble|Drive
+251658245	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658246	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658247	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658248	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658249	DST	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440513	AMP	0,1,2	-	Gain|Tone|Volume
+117440515	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440548	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440516	AMP	0,1,2,3,4,5	-	Gain|Volume|Bass|Middle|Treble|Bright
+117440517	AMP	0,1,2,3	-	Gain|Volume |Bass|Treble
+117440521	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Treble|Bright
+117440525	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440527	AMP	0,1,2	-	Gain|Tone|Volume
+117440552	AMP	0,1,2,3,4	-	Gain 1|Tone 1|Gain 2|Tone 2|Volume
+117440528	AMP	0,1,2,3,4	-	Gain|Tone Cut|Volume|Bass|Treble
+117440529	AMP	0,1,2,3	-	Gain|Tone Cut|Volume|Bright
+117440551	AMP	0,1,2,3,4,5	-	Gain|Tone Cut|Volume|Bass|Treble|Char
+117440532	AMP	0,1,2,3,4	-	Gain|Bass|Middle|Treble|Bright
+117440533	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440584	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440537	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440586	AMP	0,1,2,3,4,5,6	-	Input|Gain|Presence|Volume|Bass|Middle|Treble
+117440538	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Treble|Bright
+117440573	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440579	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440580	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440621	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440622	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440539	AMP	0,1,2,3,4,5	-	Gain|Tone Cut|Volume|Bass|Middle|Treble
+117440585	AMP	0,1,2,3,4,5	-	Gain|Tone Cut|Volume|Bass|Middle|Treble
+117440543	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440635	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440636	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440546	AMP	0,1,2	-	Gain|Presence|Volume
+117440587	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Edge|Treble
+117440547	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440583	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440601	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440554	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440555	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440556	AMP	0,1,2,3,4,5,6	-	Gain 1|Presence|Volume|Bass|Middle|Treble|Gain 2
+117440557	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440558	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440559	AMP	0,1,2,3,4,5,6	-	Gain 1|Presence|Volume|Bass|Middle|Treble|Gain 2
+117440560	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440565	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440590	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440576	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440577	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440605	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440606	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440569	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440570	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440571	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440597	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440598	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440599	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440616	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440617	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440574	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440595	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+117440602	AMP	0,1,2,3,4,6	-	Gain|Volume|Bass|Middle|Treble|Presence
+117440607	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440608	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440611	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440613	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440614	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440618	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440619	AMP	0,1,2,3,4,5	-	Gain|Presence|Volume|Bass|Middle|Treble
+117440627	AMP	0,1,2,3,4,5	-	Gain|Bass|Middle|Midrange|Treble|Volume
+117440629	AMP	0,1,2	-	Volume|Bass|Treble
+117440631	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+134217845	AMP	0,1,2	-	Volume|Bass|Treble
+134217846	AMP	0,1,2,3,4	-	Volume|Bright|Bass|Middle|Treble
+134217850	AMP	0,1,2,3,4,5	-	Volume|Tone|Balance|EQ Freq|EQ Q|EQ Gain
+134217851	AMP	0,1,2,3,4,5	-	Volume|Tone|Balance|EQ Freq|EQ Q|EQ Gain
+251658240	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658241	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658242	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658243	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+251658244	AMP	0,1,2,3,4	-	Gain|Volume|Bass|Middle|Treble
+27	NR	0	-	Threshold
+29	NR	0,1,2	-	Threshold|Attack|Release
+33	NR	0,1,2,3,4,5	-	Threshold|Ratio|Attack|Release|Hold|Hysteresis
+167772160	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772161	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772162	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772180	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772171	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772163	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772164	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772178	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772187	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772182	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772190	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772177	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772174	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772179	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772191	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772192	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772193	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772194	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772208	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772203	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772168	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772175	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772165	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772166	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772167	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772176	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772170	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772173	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772196	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772169	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772185	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772172	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772181	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772183	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772184	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772186	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772188	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772189	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772195	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772197	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772198	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772199	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772200	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772201	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772202	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772204	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772205	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772206	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772207	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772209	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772210	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772215	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772211	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772217	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772213	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772214	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772212	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772216	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772219	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772218	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772220	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772221	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772222	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772223	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772224	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772225	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772226	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772227	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772228	CAB	1,5,6	-	Volume|Low Cut|High Cut
+167772229	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820736	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820737	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820738	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820739	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820740	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820741	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820742	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820743	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820744	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820745	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820746	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820747	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820748	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820749	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820750	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820751	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820752	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820753	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820754	CAB	1,5,6	-	Volume|Low Cut|High Cut
+168820755	CAB	1,5,6	-	Volume|Low Cut|High Cut
+16777269	EQ	0,1,2,3,4,5	-	125Hz|400Hz|800Hz|1.6kHz|4kHz|Volume
+16777270	EQ	0,1,2,3,4,5	-	100Hz|500Hz|1kHz|3kHz|6kHz|Volume
+16777273	EQ	0,1,2,3,4,5	-	33Hz|150Hz|600Hz|2kHz|8kHz|Volume
+16777274	EQ	0,1,2,3,4,5	-	50Hz|120Hz|400Hz|800Hz|4.5kHz|Volume
+16777276	EQ	0,1,2,3,4	-	80Hz|240Hz|750Hz|2.2kHz|6.6kHz
+16777283	EQ	0,1,2,3,4,5,6,7,8,9,10	-	31Hz|63Hz|125Hz|250Hz|500Hz|1kHz|2kHz|4kHz|8kHz|16kHz|Volume
+67108864	MOD	0,1,2,3	3>1	Depth|Rate|Tone|Sync
+67108865	MOD	0,1,2,3	3>1	Depth|Rate|Volume|Sync
+67108866	MOD	0	-	Mode
+67108872	MOD	0,1,2,3	3>1	Depth|Rate|Volume|Sync
+67108879	MOD	0,1,2,3,4,5,6	6>1	Mix|Rate|Filter|Depth L|Depth C|Depth R|Sync
+67108881	MOD	0,1,2,3,4	4>1	Depth|Rate|Pre Delay|Feedback|Sync
+67108882	MOD	0,1,2,3,4	4>1	Depth|Rate|Pre Delay|Feedback|Sync
+67108883	MOD	0,1,2,3,4	4>1	Depth|Rate|Pre Delay|Feedback|Sync
+67108884	MOD	0,1,2,3,4,5,6	5>1,6>4	Flg Depth|Flg Rate|Feedback|Trm Depth|Trm Rate|Flg Sync|Trm Sync
+67108885	MOD	0,1,2	2>1	Depth|Rate|Sync
+67108886	MOD	0,1,2,3	3>1	Depth|Rate|Volume|Sync
+67108887	MOD	0,1,2,3	3>1	Depth|Rate|Volume|Sync
+67108888	MOD	0,1,2,3	3>1	Sens|Rate|Output|Sync
+67108889	MOD	0,1	1>0	Rate|Sync
+67108890	MOD	0,1,2	2>1	Depth|Rate|Sync
+67108891	MOD	0,1,2	2>1	Color|Rate|Sync
+67108894	MOD	0,1,2,3,4,5	4>1,5>3	Phs Depth|Phs Rate|Pan Depth|Pan Rate|Phs Sync|Pan Sync
+67108895	MOD	0,1,2	2>1	Depth|Rate|Sync
+67108896	MOD	0,1,2,3,4	4>1	Depth|Rate|Volume|Mode|Sync
+67108897	MOD	0,1,2	2>1	Depth|Rate|Sync
+67108902	MOD	0,1,2,3	3>1	Depth|Rate|Volume|Sync
+67108903	MOD	0,1,2,3	3>1	Depth|Rate|Volume|Sync
+67108904	MOD	0,1,2,3,4	3>1	Depth|Rate|Volume|Sync|Bias
+16777257	MOD	0,1,2	-	Detune|Wet|Dry
+16777262	MOD	0,1,2,3,4	-	Mix|Krush|Bit|Hi Cut|Lo Cut
+184549405	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Time R%|Spread|Level|Sync|Trail
+184549407	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Time R%|Spread|Level|Sync|Trail
+184549409	DLY	0,1,2,3,4,5,6,7,8,9,10,11	10>1	Mix|Time|Feedback|Time R%|Spread|Wow &|Age|Scrape|Drive|Level|Sync|Trail
+184549418	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Level|Mod|Tone|Sync|Trail
+184549422	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Level|Mod|Tone|Sync|Trail
+184549376	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail
+184549377	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail
+184549378	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail
+184549380	DLY	0,2,1,3,4	3>2	Mix|Time|Feedback|Sync|Trail
+184549381	DLY	0,1,2,4	-	Mix|Time|Feedback|Trail
+184549382	DLY	0,2,1,3,4,5,6,7	6>2,5>4	Mix|Time|Feedback|Sweep Depth|Sweep Rate|Sweep Sync|Time Sync|Trail
+184549385	DLY	0,2,1,3,4,5,6,7	6>2	Dly Mix|Time|Feedback|Ring Mix|Freq|Tone|Sync|Trail
+184549387	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail
+184549388	DLY	0,1,2,3,4,5,6	5>1	Mix|Time|Feedback|Tone|Mode|Sync|Trail
+184549389	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail
+184549394	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail
+184549396	DLY	0,2,1,3,4,5,6	5>2	Mix|Time|Feedback|Mod|Tone|Sync|Trail
+184549414	DLY	0,1,2,3,4,6,7	6>1	Mix|Time|Feedback|Crush|Bit|Sync|Trail
+184549416	DLY	0,1,2,3,4,5	4>1	Mix|Time|Feedback|Level|Sync|Trail
+184549379	DLY	0,2,1,3,5,4,6,7,8	6>2,7>5	Mix A|Time A|Feedback A|Mix B|Time B|Feedback B|Sync A|Sync B|Trail
+184549427	DLY	0,1,2,3,4,5,6,7,8,9,10,11,12	11>1	Mix|Time|Feedback|Tone|Mod|Pitch|Slice|Direction|Blend|Smooth|Level|Sync|Trail
+184549426	DLY	0,1,2,3,4,5,6	5>1	Mix|Time|Feedback|Latch|Cut|Sync|Trail
+201326592	RVB	0,1,2,3	-	Mix|Pre Delay|Decay|Trail
+201326593	RVB	0,1,2,3	-	Mix|Pre Delay|Decay|Trail
+201326594	RVB	0,1,2,3	-	Mix|Pre Delay|Decay|Trail
+201326595	RVB	0,1,2,3	-	Mix|Decay|High Damp|Trail
+201326596	RVB	0,1,2,3	-	Mix|Decay|Tone|Trail
+201326610	RVB	0,1,2,3,4,5,6	-	Mix|Pre Delay|Decay|Low Damp|Hi Damp|Mod|Trail
+201326609	RVB	0,1,2,3,4,5,6	-	Mix|Pre Delay|Decay|Low Damp|Hi Damp|Mod|Trail
+201326603	RVB	0,1,2,3,4,5,6	-	Mix|Pre Delay|Decay|Low Damp|Hi Damp|Mod|Trail
+201326604	RVB	0,1,2,3,4,5,6	-	Mix|Pre Delay|Decay|Low Damp|Hi Damp|Mod|Trail
+201326605	RVB	0,1,2,3,4,5,6	-	Mix|Pre Delay|Decay|Low Damp|Hi Damp|Mod|Trail
+201326606	RVB	0,1,2,3,4,5,6	-	Mix|Pre Delay|Decay|Low Damp|Hi Damp|Mod|Trail
+201326598	RVB	0,1,2	-	Mix|Decay|Trail
+201326599	RVB	0,1,2	-	Mix|Decay|Trail
+201326600	RVB	0,1,2,3,4,5	-	Mix|Pre Delay|Decay|Lo End|Hi End|Trail
+201326601	RVB	0,1,2,3,4,5	-	Mix|Pre Delay|Decay|Lo End|Hi End|Trail
+100663299	VOL	0	-	Volume
