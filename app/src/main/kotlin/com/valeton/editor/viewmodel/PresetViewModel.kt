@@ -633,6 +633,19 @@ class PresetViewModel(
         if (midiManager.connectionState.value is MidiConnectionState.Connected) midiManager.sendCtrlAssignment(0, updated.ctrls[0])
     }
 
+    fun setCtrlTarget(ctrlIndex: Int, blockIndex: Int, enabled: Boolean) {
+        if (controlsBusy() || ctrlIndex !in 0..3 || blockIndex !in 0..10) return
+        val preset = _uiState.value.preset ?: return
+        if (preset.effects.none { it.slotIndex == blockIndex }) return
+        val controls = preset.controlMappings ?: return
+        val updated = controls.withCtrlTarget(ctrlIndex, blockIndex, enabled)
+        if (updated == controls) return
+        _uiState.update { it.copy(preset = preset.copy(controlMappings = updated), hasUnsavedChanges = true) }
+        if (midiManager.connectionState.value is MidiConnectionState.Connected) {
+            midiManager.sendCtrlAssignment(ctrlIndex, updated.ctrls[ctrlIndex])
+        }
+    }
+
     fun changeEffect(slotIndex: Int, newEffectId: Int) {
         if (controlsBusy()) return
         val preset = _uiState.value.preset ?: return

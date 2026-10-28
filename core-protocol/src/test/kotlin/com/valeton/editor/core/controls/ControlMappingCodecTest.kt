@@ -25,6 +25,37 @@ class ControlMappingCodecTest {
     }
 
     @Test
+    fun `all four CTRL assignments survive PRST import and export`() {
+        val original = PRSTDecoder(javaClass.getResourceAsStream("/fixtures/01-A_CTRL_TEST.prst")!!.readBytes()).decode()
+        val mappings = original.controlMappings!!
+
+        assertEquals(List(4) { 0x7ffL } + List(4) { 0L }, mappings.ctrls.map { it.targetMask })
+
+        val exported = PRSTEncoder().encode(original)
+        val importedAgain = PRSTDecoder(exported).decode()
+
+        assertEquals(mappings, importedAgain.controlMappings)
+        assertEquals(original.effects, importedAgain.effects)
+    }
+
+    @Test
+    fun `toggling one CTRL effect preserves every other assignment and opaque field`() {
+        val mappings = PRSTDecoder(javaClass.getResourceAsStream("/fixtures/01-A_CTRL_TEST.prst")!!.readBytes())
+            .decode().controlMappings!!
+
+        val withUpperMaskBit = mappings.copy(ctrls = mappings.ctrls.toMutableList().apply {
+            set(1, get(1).copy(targetMask = 0x800007ffL))
+        })
+        val updated = withUpperMaskBit.withCtrlTarget(ctrlIndex = 1, blockIndex = 3, enabled = false)
+
+        assertEquals(0x7ffL, updated.ctrls[0].targetMask)
+        assertEquals(0x800007f7L, updated.ctrls[1].targetMask)
+        assertEquals(withUpperMaskBit.ctrls[1].flags, updated.ctrls[1].flags)
+        assertEquals(withUpperMaskBit.ctrls[1].reserved, updated.ctrls[1].reserved)
+        assertEquals(withUpperMaskBit.ctrls.filterIndexed { index, _ -> index != 1 }, updated.ctrls.filterIndexed { index, _ -> index != 1 })
+    }
+
+    @Test
     fun `changing CTRL1 replaces low effect bits while preserving other fields`() {
         val bytes = fixture()
         // Controlled opaque fields and mask, independent of the fixture's saved CTRL state.

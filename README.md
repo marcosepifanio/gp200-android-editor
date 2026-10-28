@@ -2,7 +2,7 @@
 
 Editor independente de presets para pedaleiras Valeton GP-200, feito para Android com Kotlin, Jetpack Compose e Material 3. Conecte a pedaleira por USB MIDI para editar efeitos, organizar presets e controlar os ritmos pelo celular.
 
-**Versão 1.0.0 — publicação do código-fonte.** Esta publicação não inclui APKs oficiais para download. O mantenedor relata testes físicos com a **GP-200 LT**, incluindo importação, exportação e correções de salvamento. Outras variantes e versões de firmware precisam de validação própria.
+**Versão atual do projeto: 1.0.1.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
 
 Este projeto não é um produto oficial da Valeton e não declara afiliação ou endosso da fabricante. Os nomes de marcas e equipamentos são usados como referências de identificação e pertencem aos respectivos titulares.
 
@@ -12,19 +12,20 @@ Este projeto não é um produto oficial da Valeton e não declara afiliação ou
   <tr>
     <td align="center"><img src="docs/images/conexao.png" width="260" alt="Tela inicial com conexão USB e opção de continuar offline"><br><b>Conexão</b><br>Conecte a pedaleira ou explore o modo offline.</td>
     <td align="center"><img src="docs/images/cadeia.png" width="260" alt="Cadeia de sinal com blocos de efeitos e switches"><br><b>Cadeia de sinal</b><br>Visualize, ative e organize os efeitos.</td>
-    <td align="center"><img src="docs/images/editor.png" width="260" alt="Editor do AC Refiner com Shape centralizado e bloco desligado"><br><b>Editor de efeitos</b><br>Ajuste parâmetros e navegue entre modelos.</td>
+    <td align="center"><img src="docs/images/edicao-amp.png" width="260" alt="Tela de edição do AMP Tweedy com controles Gain, Tone e Volume"><br><b>Edição de AMP</b><br>Ajuste os parâmetros do amplificador.</td>
   </tr>
   <tr>
     <td align="center"><img src="docs/images/presets.png" width="260" alt="Lista de slots de presets com busca e importação"><br><b>Presets</b><br>Busque slots e importe arquivos .prst.</td>
     <td align="center"><img src="docs/images/ritmos.png" width="260" alt="Tela de ritmos com catálogo, volume e andamento"><br><b>Ritmos</b><br>Escolha padrões, volume e andamento.</td>
-    <td align="center"><img src="docs/images/controles.png" width="260" alt="Tela de controles offline informando que os mapeamentos ainda não foram lidos"><br><b>Controles</b><br>Configure associações quando os dados do patch estiverem disponíveis.</td>
+    <td align="center"><img src="docs/images/selecao-amp.png" width="260" alt="Seletor de amplificadores aberto na categoria Amplifier"><br><b>Seleção de AMP</b><br>Busque e escolha um modelo de amplificador.</td>
   </tr>
   <tr>
-    <td colspan="3" align="center"><img src="docs/images/sobre.png" width="260" alt="Aba Sobre com ícone próprio, versão do app, aviso de aplicativo não oficial da Valeton e créditos"><br><b>Sobre</b><br>Versão, aviso de independência, créditos e código-fonte.</td>
+    <td align="center"><img src="docs/images/controles-ctrls.png" width="260" alt="Tela de controles com os três knobs e CTRL 1 a CTRL 4 em abas, com efeitos selecionados"><br><b>Controles</b><br>Configure os três knobs e vários efeitos em cada CTRL.</td>
+    <td colspan="2" align="center"><img src="docs/images/sobre.png" width="260" alt="Aba Sobre com ícone próprio, versão do app, aviso de aplicativo não oficial da Valeton e créditos"><br><b>Sobre</b><br>Versão, aviso de independência, créditos e código-fonte.</td>
   </tr>
 </table>
 
-Capturas da versão 1.0.0 em emulador, no **modo offline**, sem pedaleira conectada. Os nomes de presets são rótulos locais; a tela de Controles mostra o estado sem mapeamentos carregados.
+As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP, assim como a de Controles, mostram a versão 1.0.1 em emulador após importar o fixture `01-A CTRL - TEST.prst`; não representam uma conexão MIDI ativa.
 
 ## Recursos
 
@@ -34,7 +35,7 @@ Capturas da versão 1.0.0 em emulador, no **modo offline**, sem pedaleira conect
 - **Arquivos `.prst`:** importação com confirmação, exportação para armazenamento e compartilhamento por outros apps. A leitura aceita arquivos de 1176 ou 1224 bytes; a exportação gera 1224 bytes.
 - **Salvamento com verificação:** o app lê o slot após a escrita e compara a resposta com o preset esperado antes de confirmar o resultado.
 - **Ritmos:** catálogo de 100 padrões com busca e filtros por gênero, reprodução na pedaleira, volume e BPM.
-- **Controles físicos:** edição das associações dos três knobs e de CTRL 1 do patch, quando os mapeamentos estiverem disponíveis.
+- **Controles físicos:** configuração dos três knobs físicos e dos CTRL 1 a CTRL 4. Cada CTRL pode ter vários blocos entre PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL.
 - **Sobre:** versão da compilação, aviso de aplicativo não oficial da Valeton e créditos dos projetos utilizados.
 
 O app é um controlador/editor: o processamento de guitarra e a reprodução dos ritmos acontecem na pedaleira. O modo offline permite explorar a interface e editar dados locais disponíveis; ele não emula o áudio da GP-200. Dados em cache podem estar desatualizados em relação ao equipamento.
@@ -50,7 +51,9 @@ O app é um controlador/editor: o processamento de guitarra e a reprodução dos
 
 Para conhecer a interface sem equipamento, toque em **Continuar sem conectar (Modo Offline)** na tela inicial. Quando não há preset em cache, o app cria um **Preset Inicial** com todos os blocos desligados, o primeiro modelo da lista de cada bloco selecionado e parâmetros no meio das respectivas faixas, ajustados aos passos disponíveis. Opções discretas usam a opção central inferior quando não existe um centro exato. Presets já armazenados não são substituídos por esse padrão.
 
-Os mapeamentos de controles dependem de dados previamente lidos ou importados. Ao testar no hardware, faça backup dos seus presets antes de gravar alterações.
+Os mapeamentos de controles dependem de dados previamente lidos ou importados. Na aba **Controles**, use as abas CTRL 1 a CTRL 4 para escolher o controle e marque os blocos que ele deve afetar; a seção dos três knobs continua disponível acima. Ao testar no hardware, faça backup dos seus presets antes de gravar alterações.
+
+No modo offline, abra **Presets → Importar**, escolha um arquivo `.prst` e toque em **Apenas testar (ao vivo)** para carregar o patch no app sem gravá-lo na pedaleira. Depois, abra **Controles** para conferir ou editar os knobs e CTRLs daquele patch.
 
 ## Compilar
 

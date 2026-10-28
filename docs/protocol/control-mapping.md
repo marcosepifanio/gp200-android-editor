@@ -6,11 +6,17 @@ Evidence: static inspection of the user's installed 32-bit GP-200.exe and the re
 
 Writer0x464580 constructs `[10 00 04 00 index block parameterLE16]`, stores it in current/selected preset object+0x48c+8*index. Index0..2. OFF selection0x463ebf sends block255/parameter255. Existing files use parameter0 for OFF; decode OFF by block alone. Blocks11 and12 are Patch Volume and Patch Tempo (render0x4640c9/0x464133); parameter255. Normal effect menu enumerates block0..9 and all catalog parameters, including discrete types; do not offer block10 as a normal quick-knob destination.
 
-## CTRL 1
+## CTRL records and target bits
 
-Checkbox handler0x466f30 copies `[0f 00 08 00 index opaqueByte reservedLE16 targetMaskLE32]` then changes only one low bit in mask. Eight records at object+0x4a4+12*index. CTRL1=index0, confirmed by first button label construction0x46670d..0x4668f9 and click0x46790d.
+Checkbox handler0x466f30 copies `[0f 00 08 00 index opaqueByte reservedLE16 targetMaskLE32]` then changes only one low bit in mask. Eight records at object+0x4a4+12*index. CTRL1=index0, confirmed by first button label construction0x46670d..0x4668f9 and click0x46790d. The official UI reference supplied by the maintainer displays four controls, CTRL1 through CTRL4.
 
-Low mask bits0..10 correspond to PRE,WAH,DST,AMP,NR,CAB,EQ,MOD,DLY,RVB,VOL, confirmed by debug format0x2295090 and argument extraction0x467152..0x4671b9. Single-target edit replaces only low11bits; retain upper21bits, opaqueByte, reserved bytes, and all seven other records. Zero lowbits means no targets. Byte5's interpretation is unknown: desktop preserves it, so the app must do the same.
+Low mask bits0..10 correspond to PRE,WAH,DST,AMP,NR,CAB,EQ,MOD,DLY,RVB,VOL, confirmed by debug format0x2295090 and argument extraction0x467152..0x4671b9. A mask can target multiple blocks at once. Zero lowbits means no targets. Byte5's interpretation is unknown: desktop preserves it, so the app must do the same.
+
+## Android editor behavior
+
+The Controls screen retains the three quick-knob editors and exposes CTRL1 through CTRL4 in separate tabs. Each tab has independent checkboxes for the eleven effect blocks. Toggling a block changes only its bit in that CTRL record; opaque fields, upper mask bits, and all other records remain intact. The current screen does not expose CTRL5 through CTRL8, but their records remain in the model and are preserved during import/export and save.
+
+The supplied `01-A CTRL - TEST.prst` fixture checks the import/export round trip: CTRL1 through CTRL4 have mask `0x7ff` (all eleven blocks selected), while CTRL5 through CTRL8 have zero target masks. The maintainer reported a successful physical test of the new CTRL configuration; model and firmware were not recorded for that test. This report does not establish behavior for every GP-200 variant or firmware.
 
 ## Serialization
 

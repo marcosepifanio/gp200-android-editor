@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -234,19 +233,6 @@ fun EffectPickerSheet(
             )
             if (targetIndex != null) {
                 listState.animateScrollToItem(targetIndex)
-                withFrameNanos { }
-
-                val layoutInfo = listState.layoutInfo
-                val selectedItem = layoutInfo.visibleItemsInfo.firstOrNull { it.key == currentEffectId }
-                if (selectedItem != null) {
-                    val scrollDelta = EffectPickerLogic.scrollDeltaToCenterItem(
-                        itemOffset = selectedItem.offset,
-                        itemSize = selectedItem.size,
-                        viewportStart = layoutInfo.viewportStartOffset,
-                        viewportEnd = layoutInfo.viewportEndOffset
-                    )
-                    if (scrollDelta != 0f) listState.animateScrollBy(scrollDelta)
-                }
             }
         }
     }
@@ -433,20 +419,19 @@ fun EffectPickerSheet(
                             }
                         }
                     } else {
-                        BoxWithConstraints(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
                         ) {
-                            val centerPadding = maxHeight / 2
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(
                                     start = 16.dp,
                                     end = 16.dp,
-                                    top = centerPadding,
-                                    bottom = centerPadding
+                                    top = 8.dp,
+                                    bottom = 8.dp
                                 ),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {

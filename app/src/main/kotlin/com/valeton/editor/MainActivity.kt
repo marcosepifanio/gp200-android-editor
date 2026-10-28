@@ -433,7 +433,9 @@ class MainActivity : ComponentActivity() {
                                         busy = uiState.isSaving || uiState.isImporting || uiState.isPerformingFullSync || uiState.isSyncingCurrentPreset,
                                         hasUnsavedChanges = uiState.hasUnsavedChanges,
                                         onQuickKnobChange = { index, block, param -> presetViewModel.updateQuickKnob(index, block, param) },
-                                        onCtrl1Change = { block -> presetViewModel.setCtrl1Effect(block) },
+                                        onCtrlTargetChange = { ctrlIndex, blockIndex, enabled ->
+                                            presetViewModel.setCtrlTarget(ctrlIndex, blockIndex, enabled)
+                                        },
                                         onReload = { presetViewModel.syncCurrentPatch() }
                                     )
                                 }

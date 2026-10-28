@@ -39,6 +39,17 @@ data class ControlMappings(val knobs: List<QuickKnobAssignment>, val ctrls: List
         return copy(ctrls = listOf(old.copy(targetMask = mask)) + ctrls.drop(1))
     }
 
+    fun withCtrlTarget(ctrlIndex: Int, blockIndex: Int, enabled: Boolean): ControlMappings {
+        require(ctrlIndex in 0..3)
+        require(blockIndex in 0..10)
+        val bit = 1L shl blockIndex
+        val ctrl = ctrls[ctrlIndex]
+        val targetMask = if (enabled) ctrl.targetMask or bit else ctrl.targetMask and bit.inv()
+        return copy(ctrls = ctrls.mapIndexed { index, assignment ->
+            if (index == ctrlIndex) assignment.copy(targetMask = targetMask) else assignment
+        })
+    }
+
     fun matchesDevice(actual: ControlMappings): Boolean = ctrls.zip(actual.ctrls).all { (expected, received) -> expected.matchesDevice(received) } && knobs.zip(actual.knobs).all { (expected, received) ->
         expected.blockIndex == received.blockIndex &&
             (expected.blockIndex in listOf(11, 12, 255) || expected.paramIndex == received.paramIndex)

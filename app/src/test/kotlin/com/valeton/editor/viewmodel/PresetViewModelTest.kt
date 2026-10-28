@@ -1611,6 +1611,23 @@ class PresetViewModelTest {
     }
 
     @Test
+    fun `CTRL 2 to 4 edits update and send only the selected record`() = kotlinx.coroutines.test.runTest {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = backgroundScope)
+        val original = presetWithControls()
+        vm.loadPreset(original)
+
+        vm.setCtrlTarget(ctrlIndex = 2, blockIndex = 3, enabled = true)
+
+        val updated = vm.uiState.value.preset!!.controlMappings!!
+        assertTrue(updated.ctrls[2].targetMask and (1L shl 3) != 0L)
+        assertEquals(original.controlMappings!!.ctrls.filterIndexed { index, _ -> index != 2 }, updated.ctrls.filterIndexed { index, _ -> index != 2 })
+        assertEquals(listOf(2), midi.ctrlAssignments.map { it.first })
+        assertEquals(updated.ctrls[2], midi.ctrlAssignments.single().second)
+        assertTrue(vm.uiState.value.hasUnsavedChanges)
+    }
+
+    @Test
     fun `legacy unknown mappings are not overwritten by UI edits`() = kotlinx.coroutines.test.runTest {
         val midi = FakeMidiManager()
         val vm = PresetViewModel(midi, coroutineScope = backgroundScope)

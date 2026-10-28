@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,11 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.valeton.editor.core.model.GP200Preset
+import com.valeton.editor.core.model.ModuleType
 import com.valeton.editor.ui.theme.StudioPalette
 
 @Composable
@@ -26,7 +29,7 @@ fun StudioControlsScreen(
     busy: Boolean,
     hasUnsavedChanges: Boolean,
     onQuickKnobChange: (Int, Int, Int) -> Unit,
-    onCtrl1Change: (Int?) -> Unit,
+    onCtrlTargetChange: (Int, Int, Boolean) -> Unit,
     onReload: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -35,7 +38,7 @@ fun StudioControlsScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text("CONTROLES", style = MaterialTheme.typography.titleLarge, color = StudioPalette.TextPrimary, fontWeight = FontWeight.Bold)
-        Text("Configure os três knobs físicos e o CTRL 1 deste patch.", color = StudioPalette.TextSecondary)
+        Text("Configure os três knobs físicos e os CTRL 1 a 4 deste patch.", color = StudioPalette.TextSecondary)
         if (!connected) {
             Surface(color = StudioPalette.SurfaceRaised, shape = RoundedCornerShape(12.dp), border = androidx.compose.foundation.BorderStroke(1.dp, StudioPalette.AmberLed.copy(alpha = 0.35f))) {
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -171,15 +174,67 @@ fun StudioControlsScreen(
                 }
             }
         }
-        ControlCard("CTRL 1") {
-            Text("Ligar/desligar um único efeito.", color = StudioPalette.TextSecondary)
-            val options = listOf(MappingOption(-1, "Nenhum efeito")) + preset.effects.sortedBy { it.slotIndex }
-                .filter { it.slotIndex in 0..10 }.map { MappingOption(it.slotIndex, ControlMappingOptions.effectLabel(preset, it.slotIndex)) }
-            MappingSelect("Efeito", ControlMappingOptions.ctrlLabel(preset, controls.ctrls[0]), options, !busy) { block ->
-                onCtrl1Change(block.takeIf { it >= 0 })
+        var selectedCtrlIndex by remember(currentSlot) { mutableIntStateOf(0) }
+        ControlCard("CONTROLES CTRL") {
+            Text("Marque os efeitos que cada CTRL pode desativar.", color = StudioPalette.TextSecondary)
+            TabRow(selectedTabIndex = selectedCtrlIndex) {
+                (0..3).forEach { index ->
+                    Tab(
+                        selected = selectedCtrlIndex == index,
+                        onClick = { selectedCtrlIndex = index },
+                        enabled = !busy,
+                        text = { Text("CTRL ${index + 1}") }
+                    )
+                }
             }
-            if (controls.ctrls[0].effectBlocks.size > 1) {
-                Text("O patch possui vários alvos. Escolher um efeito substituirá essa associação.", color = StudioPalette.TextMuted)
+            for (row in (0..10).toList().chunked(2)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    row.forEach { blockIndex ->
+                        val bit = 1L shl blockIndex
+                        val checked = controls.ctrls[selectedCtrlIndex].targetMask and bit != 0L
+                        val fullLabel = ControlMappingOptions.effectLabel(preset, blockIndex)
+                        val effectName = fullLabel.substringAfter(" · ", fullLabel)
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .toggleable(
+                                    value = checked,
+                                    enabled = !busy,
+                                    role = Role.Checkbox,
+                                    onValueChange = { onCtrlTargetChange(selectedCtrlIndex, blockIndex, it) }
+                                ),
+                            color = if (checked) StudioPalette.SurfaceRaised else StudioPalette.Surface,
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, if (checked) StudioPalette.Accent.copy(alpha = 0.7f) else StudioPalette.BorderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Checkbox(checked = checked, onCheckedChange = null, enabled = !busy)
+                                Column(Modifier.padding(start = 2.dp)) {
+                                    Text(
+                                        ModuleType.fromSlotIndex(blockIndex).code,
+                                        color = StudioPalette.TextPrimary,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                    Text(
+                                        effectName,
+                                        color = StudioPalette.TextMuted,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (row.size == 1) Spacer(Modifier.weight(1f))
+                }
             }
         }
         Text(

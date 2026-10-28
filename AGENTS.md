@@ -33,7 +33,7 @@ Os módulos e plugins Gradle estão declarados em `settings.gradle.kts` e nos `b
 - **Cadeia:** `app/src/main/kotlin/com/valeton/editor/ui/chain/` exibe os blocos, a ordem e controles globais do patch; a edição detalhada de efeitos fica em `app/src/main/kotlin/com/valeton/editor/ui/editor/`.
 - **Presets:** `app/src/main/kotlin/com/valeton/editor/ui/manage/` lista e gerencia slots, importa `.prst`, salva na pedaleira, exporta para armazenamento local e compartilha por outros apps.
 - **Ritmos:** `app/src/main/kotlin/com/valeton/editor/ui/drums/` controla reprodução, padrão, gênero, volume e andamento; padrões ficam no catálogo `core-protocol/src/main/kotlin/com/valeton/editor/core/catalog/DrumCatalog.kt`.
-- **Controles:** `app/src/main/kotlin/com/valeton/editor/ui/controls/` configura os três knobs físicos e CTRL 1 do patch; codec e modelos correspondentes ficam em `core-protocol/src/main/kotlin/com/valeton/editor/core/codec/ControlMappingCodec.kt` e `core-protocol/src/main/kotlin/com/valeton/editor/core/model/ControlMappings.kt`.
+- **Controles:** `app/src/main/kotlin/com/valeton/editor/ui/controls/` configura os três knobs físicos e CTRL 1 a CTRL 4 do patch. Cada CTRL pode selecionar vários dos 11 blocos; registros adicionais ainda são preservados pelo modelo e pelos codecs. Codec e modelos correspondentes ficam em `core-protocol/src/main/kotlin/com/valeton/editor/core/codec/ControlMappingCodec.kt` e `core-protocol/src/main/kotlin/com/valeton/editor/core/model/ControlMappings.kt`.
 - **Sobre:** `app/src/main/kotlin/com/valeton/editor/ui/about/StudioAboutScreen.kt` informa a versão via `BuildConfig`, o caráter independente e não oficial da Valeton e os créditos dos projetos utilizados.
 
 O fluxo atual em `MainActivity` usa `StudioChainScreen`, `StudioPatchManagerScreen`, `StudioDrumScreen`, `StudioControlsScreen`, `StudioPedalEditorScreen` e `StudioAboutScreen`. Há outros componentes com nomes semelhantes no repositório; confira os usos e a navegação antes de escolher qual tela alterar.
@@ -79,7 +79,7 @@ A importação recebe um `Uri` e decodifica o arquivo antes de apresentar a conf
 
 As mensagens SysEx usam o envelope GP-200 implementado em `SysExCodec`, com payload codificado em nibbles. Deixe a construção e o parsing de comandos nesse codec; não monte mensagens por índices copiados de um log ou de uma spec histórica. `PresetWritePlan` e `PresetSaveVerifier` são partes do contrato de confiabilidade de escrita.
 
-Para o protocolo de knobs físicos e CTRL 1, consulte [`docs/protocol/control-mapping.md`](docs/protocol/control-mapping.md). Esse documento descreve evidências obtidas por análise do software desktop e fixtures e declara explicitamente que não é uma captura física. Não apresente uma inferência desse documento como comportamento universal confirmado pela pedaleira.
+Para o protocolo de knobs físicos e CTRL, consulte [`docs/protocol/control-mapping.md`](docs/protocol/control-mapping.md). Esse documento separa evidências obtidas por análise do software desktop, fixtures e relatos de testes físicos; não apresente uma inferência como comportamento universal confirmado por todas as variantes e firmwares.
 
 ## Fontes de verdade e evidência
 

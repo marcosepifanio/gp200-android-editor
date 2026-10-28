@@ -15,6 +15,17 @@ Usado nos testes de decodificação, round-trip byte a byte, mapeamentos de cont
 
 O preset de teste é separado do preset offline criado pelo aplicativo. Não é necessário que tenha os mesmos efeitos, parâmetros ou blocos ativos.
 
+## 01-A_CTRL_TEST.prst
+
+- Arquivo `01-A CTRL - TEST.prst`, fornecido pelo mantenedor em 28/10/2026 para testar a configuração dos controles.
+- Nome interno do patch: `CTRL - TEST`.
+- Incluído sem regenerar ou editar os bytes: **1224 bytes**; checksum BE16: `0x45c1`.
+- SHA-256: `a776780c589602ce17a26ea24755e0ad0e0ee996c675085210be34a157b5a32f`.
+- CTRL 1 a CTRL 4 têm máscara `0x7ff` (PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL); CTRL 5 a CTRL 8 têm máscara zero.
+- O modelo da pedaleira e a versão do firmware associados a este arquivo não foram informados.
+
+Usado em `ControlMappingCodecTest` para verificar a decodificação e o round-trip de importação/exportação, e a preservação de bits, campos opacos e registros de CTRL não editados.
+
 ## effect-parameter-schema.tsv
 
 Fixture textual do esquema de parâmetros derivada da análise documentada do catálogo do editor Windows. Sua fonte e limitações constam do cabeçalho do arquivo e de `AGENTS.md`; não representa uma captura física da pedaleira nem faz parte da substituição dos presets binários.
