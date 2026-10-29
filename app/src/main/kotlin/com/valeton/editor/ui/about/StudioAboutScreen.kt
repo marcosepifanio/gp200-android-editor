@@ -83,5 +83,16 @@ fun StudioAboutScreen(modifier: Modifier = Modifier) {
                 Text("Código-fonte, créditos e licenças", color = StudioPalette.Accent)
             }
         }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("PRIVACIDADE", color = StudioPalette.TextPrimary, fontWeight = FontWeight.Bold)
+            Text("O app não acessa a internet nem coleta dados pessoais. Presets e preferências ficam somente neste aparelho.",
+                color = StudioPalette.TextSecondary)
+            TextButton(onClick = { uriHandler.openUri(PRIVACY_POLICY_URL) }) {
+                Text("Política de privacidade", color = StudioPalette.Accent)
+            }
+        }
     }
 }
+
+internal const val PRIVACY_POLICY_URL =
+    "https://github.com/marcosepifanio/gp200-android-editor/blob/main/docs/privacy-policy.md"

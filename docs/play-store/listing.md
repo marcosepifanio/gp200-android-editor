@@ -10,6 +10,7 @@ Textos e respostas para preencher a Play Console. Revise os valores com o estado
 - **Categoria:** Música e áudio
 - **Gratuito ou pago:** Gratuito
 - **Política de privacidade:** https://github.com/marcosepifanio/gp200-android-editor/blob/main/docs/privacy-policy.md
+  A Play exige o link também dentro do app; ele fica na tela Sobre (`PRIVACY_POLICY_URL` em `StudioAboutScreen.kt`).
 
 ### Descrição curta (até 80 caracteres)
 
@@ -44,6 +45,10 @@ Código aberto sob a licença GPL-3.0: https://github.com/marcosepifanio/gp200-a
 Aviso: este é um aplicativo não oficial, sem vínculo, afiliação ou endosso da Valeton. Valeton e GP-200 são marcas de seus respectivos titulares e são citadas apenas para identificar o equipamento compatível.
 ```
 
+## Imagens
+
+Geradas por `python3 docs/play-store/make_graphics.py` em `docs/play-store/graphics/`: ícone 512×512, imagem de destaque 1024×500 e seis capturas 1080×1920 montadas a partir de `docs/images/`. As capturas que mostram marcas de terceiros no `basedOn` ficaram de fora. Na declaração de IA da Console, o ícone e a imagem de destaque estão rotulados como gerados ou editados com IA.
+
 ## Segurança dos dados (Data Safety)
 
 - **O app coleta ou compartilha algum dos tipos de dados de usuário obrigatórios?** Não.
@@ -69,10 +74,16 @@ Se alguma dessas condições mudar (por exemplo, inclusão de Crashlytics ou de 
 
 ## Teste interno
 
-- **Notas da versão (pt-BR)** para 1.0.3 (12):
+- **Notas da versão (pt-BR)** para 1.0.3 (12), primeira versão no teste interno:
 
 ```
 Primeira versão de testes na Play Store.
+```
+
+- **Notas da versão (pt-BR)** para 1.0.4 (13):
+
+```
+Link para a política de privacidade na tela Sobre.
 ```
 
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.
