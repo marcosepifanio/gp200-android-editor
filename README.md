@@ -2,7 +2,9 @@
 
 Editor independente de presets para pedaleiras Valeton GP-200, feito para Android com Kotlin, Jetpack Compose e Material 3. Conecte a pedaleira por USB MIDI para editar efeitos, organizar presets e controlar os ritmos pelo celular.
 
-**Versão atual do projeto: 1.0.2.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
+**Versão atual do projeto: 1.0.3.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
+
+O app não acessa a internet nem coleta dados pessoais; veja a [política de privacidade](docs/privacy-policy.md).
 
 Este projeto não é um produto oficial da Valeton e não declara afiliação ou endosso da fabricante. Os nomes de marcas e equipamentos são usados como referências de identificação e pertencem aos respectivos titulares.
 
