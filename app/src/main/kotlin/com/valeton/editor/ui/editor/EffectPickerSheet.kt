@@ -18,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -36,6 +39,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.valeton.editor.core.catalog.EffectCatalog
 import com.valeton.editor.core.model.EffectDefinition
 import com.valeton.editor.core.model.ModuleType
+import com.valeton.editor.repository.FavoriteEffectsRepository
 import com.valeton.editor.ui.components.PedalArtwork
 import com.valeton.editor.ui.theme.*
 
@@ -46,6 +50,7 @@ data class CategoryPill(
 
 object EffectPickerLogic {
     const val ALL_CATEGORY = "All"
+    const val FAVORITES_CATEGORY = "Favorites"
 
     /**
      * Filters [effects] based on [query] and [selectedCategory].
@@ -207,13 +212,31 @@ fun EffectPickerSheet(
 
     var searchQuery by remember(isOpen, module) { mutableStateOf("") }
     var selectedCategory by remember(isOpen, module) { mutableStateOf(EffectPickerLogic.ALL_CATEGORY) }
-
-    val categoryPills = remember(allModuleEffects, moduleCategories, searchQuery) {
-        EffectPickerLogic.buildCategoryCounts(allModuleEffects, moduleCategories, searchQuery)
+    val context = LocalContext.current
+    val favoritesRepository = remember(context) { FavoriteEffectsRepository(context) }
+    var favoriteEffectIds by remember(favoritesRepository) {
+        mutableStateOf(favoritesRepository.getFavoriteEffectIds())
     }
 
-    val filteredEffects = remember(allModuleEffects, searchQuery, selectedCategory) {
-        EffectPickerLogic.filterEffects(allModuleEffects, searchQuery, selectedCategory)
+    val favoriteModuleEffects = remember(allModuleEffects, favoriteEffectIds) {
+        allModuleEffects.filter { it.effectId in favoriteEffectIds }
+    }
+
+    val categoryPills = remember(allModuleEffects, moduleCategories, searchQuery, favoriteModuleEffects) {
+        EffectPickerLogic.buildCategoryCounts(allModuleEffects, moduleCategories, searchQuery).toMutableList().apply {
+            if (favoriteModuleEffects.isNotEmpty()) {
+                val matchingFavorites = EffectPickerLogic.filterEffects(favoriteModuleEffects, searchQuery)
+                add(1, CategoryPill(EffectPickerLogic.FAVORITES_CATEGORY, matchingFavorites.size))
+            }
+        }
+    }
+
+    val filteredEffects = remember(allModuleEffects, searchQuery, selectedCategory, favoriteModuleEffects) {
+        if (selectedCategory == EffectPickerLogic.FAVORITES_CATEGORY) {
+            EffectPickerLogic.filterEffects(favoriteModuleEffects, searchQuery)
+        } else {
+            EffectPickerLogic.filterEffects(allModuleEffects, searchQuery, selectedCategory)
+        }
     }
 
     val groupedEffects = remember(filteredEffects, moduleCategories) {
@@ -385,7 +408,11 @@ fun EffectPickerSheet(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "${if (pill.category.equals(EffectPickerLogic.ALL_CATEGORY, ignoreCase = true)) "Todos" else pill.category} ${pill.count}",
+                                    text = "${when {
+                                        pill.category.equals(EffectPickerLogic.ALL_CATEGORY, ignoreCase = true) -> "Todos"
+                                        pill.category == EffectPickerLogic.FAVORITES_CATEGORY -> "Favoritos"
+                                        else -> pill.category
+                                    }} ${pill.count}",
                                     color = textColor,
                                     fontSize = 12.sp,
                                     fontWeight = fontWeight
@@ -405,14 +432,22 @@ fun EffectPickerSheet(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Nenhum efeito encontrado",
+                                    text = if (selectedCategory == EffectPickerLogic.FAVORITES_CATEGORY) {
+                                        "Nenhum favorito encontrado"
+                                    } else {
+                                        "Nenhum efeito encontrado"
+                                    },
                                     color = TextSecondary,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Tente buscar outro nome ou equipamento",
+                                    text = if (selectedCategory == EffectPickerLogic.FAVORITES_CATEGORY) {
+                                        "Tente buscar outro nome"
+                                    } else {
+                                        "Tente buscar outro nome ou equipamento"
+                                    },
                                     color = TextMuted,
                                     fontSize = 13.sp
                                 )
@@ -513,6 +548,31 @@ fun EffectPickerSheet(
                                                     color = TextMuted,
                                                     fontSize = 12.sp,
                                                     fontWeight = FontWeight.Medium
+                                                )
+                                            }
+
+                                            val isFavorite = effect.effectId in favoriteEffectIds
+                                            IconButton(
+                                                onClick = {
+                                                    val wasFavorite = effect.effectId in favoriteEffectIds
+                                                    favoriteEffectIds = favoritesRepository.toggleFavorite(effect.effectId)
+                                                    if (
+                                                        selectedCategory == EffectPickerLogic.FAVORITES_CATEGORY &&
+                                                        wasFavorite && favoriteModuleEffects.size == 1
+                                                    ) {
+                                                        selectedCategory = EffectPickerLogic.ALL_CATEGORY
+                                                    }
+                                                },
+                                                modifier = Modifier.size(40.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                                    contentDescription = if (isFavorite) {
+                                                        "Remover ${effect.name} dos favoritos"
+                                                    } else {
+                                                        "Adicionar ${effect.name} aos favoritos"
+                                                    },
+                                                    tint = if (isFavorite) Color(0xFFFFC857) else TextSecondary
                                                 )
                                             }
                                         }

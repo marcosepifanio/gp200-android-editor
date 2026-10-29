@@ -2,7 +2,7 @@
 
 Editor independente de presets para pedaleiras Valeton GP-200, feito para Android com Kotlin, Jetpack Compose e Material 3. Conecte a pedaleira por USB MIDI para editar efeitos, organizar presets e controlar os ritmos pelo celular.
 
-**Versão atual do projeto: 1.0.1.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
+**Versão atual do projeto: 1.0.2.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
 
 Este projeto não é um produto oficial da Valeton e não declara afiliação ou endosso da fabricante. Os nomes de marcas e equipamentos são usados como referências de identificação e pertencem aos respectivos titulares.
 
@@ -23,13 +23,17 @@ Este projeto não é um produto oficial da Valeton e não declara afiliação ou
     <td align="center"><img src="docs/images/controles-ctrls.png" width="260" alt="Tela de controles com os três knobs e CTRL 1 a CTRL 4 em abas, com efeitos selecionados"><br><b>Controles</b><br>Configure os três knobs e vários efeitos em cada CTRL.</td>
     <td colspan="2" align="center"><img src="docs/images/sobre.png" width="260" alt="Aba Sobre com ícone próprio, versão do app, aviso de aplicativo não oficial da Valeton e créditos"><br><b>Sobre</b><br>Versão, aviso de independência, créditos e código-fonte.</td>
   </tr>
+  <tr>
+    <td colspan="3" align="center"><img src="docs/images/selecao-favoritos.png" width="300" alt="Seletor de efeitos com a aba Favoritos visível e um amplificador marcado"><br><b>Efeitos favoritos</b><br>Marque modelos com a estrela e filtre os favoritos do bloco atual.</td>
+  </tr>
 </table>
 
-As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP, assim como a de Controles, mostram a versão 1.0.1 em emulador após importar o fixture `01-A CTRL - TEST.prst`; não representam uma conexão MIDI ativa.
+As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As imagens não representam uma conexão MIDI ativa.
 
 ## Recursos
 
 - **11 blocos de efeitos:** PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL, com ativação, edição e reordenação da cadeia.
+- **Efeitos favoritos:** marque ou desmarque modelos pela estrela no seletor. A aba **Favoritos** aparece quando o bloco atual tem efeitos marcados e combina com a busca; os favoritos ficam salvos no app e são compartilhados entre patches, nos modos online e offline, sem serem alterados pela sincronização da pedaleira.
 - **Parâmetros do patch:** volume, Pan, tempo e Tap Tempo.
 - **Biblioteca de 256 slots:** sincronização com a pedaleira, busca, renomeação e cache local.
 - **Arquivos `.prst`:** importação com confirmação, exportação para armazenamento e compartilhamento por outros apps. A leitura aceita arquivos de 1176 ou 1224 bytes; a exportação gera 1224 bytes.
@@ -53,11 +57,13 @@ Para conhecer a interface sem equipamento, toque em **Continuar sem conectar (Mo
 
 Os mapeamentos de controles dependem de dados previamente lidos ou importados. Na aba **Controles**, use as abas CTRL 1 a CTRL 4 para escolher o controle e marque os blocos que ele deve afetar; a seção dos três knobs continua disponível acima. Ao testar no hardware, faça backup dos seus presets antes de gravar alterações.
 
+Ao escolher o modelo de um bloco, toque na estrela ao lado do efeito para adicioná-lo ou removê-lo dos favoritos. A aba **Favoritos** filtra os modelos marcados compatíveis com aquele bloco e desaparece quando não há nenhum favorito nele. Os favoritos são preferências locais do app, independentes do preset atual e preservadas ao trocar ou sincronizar patches.
+
 No modo offline, abra **Presets → Importar**, escolha um arquivo `.prst` e toque em **Apenas testar (ao vivo)** para carregar o patch no app sem gravá-lo na pedaleira. Depois, abra **Controles** para conferir ou editar os knobs e CTRLs daquele patch.
 
 ## Compilar
 
-Requisitos: **JDK 21**, Android SDK com plataforma **35**, ferramentas de compilação e Platform Tools. O projeto usa o Gradle Wrapper incluído no repositório.
+Requisitos: **JDK 21**, Android SDK com plataforma **36**, ferramentas de compilação e Platform Tools. O projeto usa o Gradle Wrapper incluído no repositório.
 
 1. Clone o repositório e abra a pasta no Android Studio.
 2. Configure o SDK pelo Android Studio ou crie um `local.properties` (ignorado pelo Git):

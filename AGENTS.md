@@ -14,6 +14,7 @@ O preset representa 11 blocos da cadeia: PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, D
   - `app/src/main/kotlin/com/valeton/editor/viewmodel/PresetUiState.kt` define o estado observado pela UI.
   - `app/src/main/kotlin/com/valeton/editor/ui/` contém telas Compose, componentes e tema. As telas principais estão em `chain/`, `manage/`, `drums/` e `controls/`.
   - `app/src/main/kotlin/com/valeton/editor/repository/PresetLibraryRepository.kt` persiste a biblioteca local em `library_cache.json`.
+  - `app/src/main/kotlin/com/valeton/editor/repository/FavoriteEffectsRepository.kt` persiste localmente os IDs dos efeitos favoritos, independentemente dos presets e da sincronização.
 - `core-protocol/` — Kotlin/JVM sem dependência de Android para modelos, catálogo e formatos de preset/protocolo.
   - `core-protocol/src/main/kotlin/com/valeton/editor/core/model/` contém `GP200Preset`, efeitos, tipos de bloco e mapeamentos.
   - `core-protocol/src/main/kotlin/com/valeton/editor/core/catalog/EffectCatalog.kt` define os modelos de efeitos e seus parâmetros.
@@ -31,6 +32,7 @@ Os módulos e plugins Gradle estão declarados em `settings.gradle.kts` e nos `b
 ## Áreas funcionais da aplicação
 
 - **Cadeia:** `app/src/main/kotlin/com/valeton/editor/ui/chain/` exibe os blocos, a ordem e controles globais do patch; a edição detalhada de efeitos fica em `app/src/main/kotlin/com/valeton/editor/ui/editor/`.
+- **Seleção de efeitos:** `app/src/main/kotlin/com/valeton/editor/ui/editor/EffectPickerSheet.kt` busca e filtra modelos por módulo e categoria. Favoritos são guardados como preferência local por `effectId`; o filtro só aparece se houver favoritos compatíveis com o módulo atual e não participa de importação, cache, `.prst` ou MIDI.
 - **Presets:** `app/src/main/kotlin/com/valeton/editor/ui/manage/` lista e gerencia slots, importa `.prst`, salva na pedaleira, exporta para armazenamento local e compartilha por outros apps.
 - **Ritmos:** `app/src/main/kotlin/com/valeton/editor/ui/drums/` controla reprodução, padrão, gênero, volume e andamento; padrões ficam no catálogo `core-protocol/src/main/kotlin/com/valeton/editor/core/catalog/DrumCatalog.kt`.
 - **Controles:** `app/src/main/kotlin/com/valeton/editor/ui/controls/` configura os três knobs físicos e CTRL 1 a CTRL 4 do patch. Cada CTRL pode selecionar vários dos 11 blocos; registros adicionais ainda são preservados pelo modelo e pelos codecs. Codec e modelos correspondentes ficam em `core-protocol/src/main/kotlin/com/valeton/editor/core/codec/ControlMappingCodec.kt` e `core-protocol/src/main/kotlin/com/valeton/editor/core/model/ControlMappings.kt`.
