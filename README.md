@@ -86,7 +86,17 @@ Para instalar em um emulador ou aparelho de testes com depuração USB habilitad
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-O APK de depuração é assinado automaticamente com a chave de desenvolvimento da máquina e serve para testes locais. Não é necessário configurar uma chave de release para publicar somente este código-fonte. Uma eventual distribuição futura de APKs de release exigirá uma configuração de assinatura própria, mantida fora do repositório.
+O APK de depuração é assinado automaticamente com a chave de desenvolvimento da máquina e serve para testes locais. Não é necessário configurar uma chave de release para publicar somente este código-fonte.
+
+### Build de release para a Play Store
+
+O bundle de release é assinado com a chave de upload informada em `keystore.properties`, na raiz do projeto. Esse arquivo e os `.jks` são ignorados pelo Git; use [keystore.properties.example](keystore.properties.example) como modelo. Sem o arquivo, o Gradle gera o bundle sem assinatura.
+
+```bash
+./gradlew :app:bundleRelease
+```
+
+O AAB fica em `app/build/outputs/bundle/release/app-release.aab`. Os logs de diagnóstico MIDI só são emitidos em builds debug.
 
 Compilar uma versão local de verificação não exige incrementar a versão. APKs distribuídos devem seguir a política de versões descrita em [AGENTS.md](AGENTS.md).
 

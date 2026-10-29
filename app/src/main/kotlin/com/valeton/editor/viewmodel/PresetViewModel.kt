@@ -1,6 +1,6 @@
 package com.valeton.editor.viewmodel
 
-import android.util.Log
+import com.valeton.editor.DebugLog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.valeton.editor.core.codec.SysExCodec
@@ -248,7 +248,7 @@ class PresetViewModel(
                 scope.launch(ioDispatcher) { libraryRepository?.saveFullLibrary(validPresets) }
             }
             is PedalEvent.DrumSyncChanged -> {
-                Log.d("ValetonDrum", "DrumSyncChanged received: enabled=${event.enabled}")
+                DebugLog.d("ValetonDrum") { "DrumSyncChanged received: enabled=${event.enabled}" }
                 _uiState.update { current ->
                     val bpm = if (event.enabled && current.preset != null) current.preset.patchTempo else current.drum.bpm
                     current.copy(
@@ -261,7 +261,7 @@ class PresetViewModel(
                 }
             }
             is PedalEvent.DrumBpmChanged -> {
-                Log.d("ValetonDrum", "DrumBpmChanged received: bpm=${event.bpm}")
+                DebugLog.d("ValetonDrum") { "DrumBpmChanged received: bpm=${event.bpm}" }
                 _uiState.update { current ->
                     val updatedPreset = if (current.drum.isSyncWithPatch && current.preset != null) {
                         current.preset.copy(patchTempo = event.bpm)
@@ -275,19 +275,19 @@ class PresetViewModel(
                 }
             }
             is PedalEvent.DrumVolumeChanged -> {
-                Log.d("ValetonDrum", "DrumVolumeChanged received: volume=${event.volume}")
+                DebugLog.d("ValetonDrum") { "DrumVolumeChanged received: volume=${event.volume}" }
                 _uiState.update { current ->
                     current.copy(drum = current.drum.copy(volume = event.volume))
                 }
             }
             is PedalEvent.DrumPatternChanged -> {
-                Log.d("ValetonDrum", "DrumPatternChanged received: patternId=${event.patternId}")
+                DebugLog.d("ValetonDrum") { "DrumPatternChanged received: patternId=${event.patternId}" }
                 _uiState.update { current ->
                     current.copy(drum = current.drum.copy(selectedPatternId = event.patternId))
                 }
             }
             is PedalEvent.DrumPlayChanged -> {
-                Log.d("ValetonDrum", "DrumPlayChanged received: playing=${event.playing}")
+                DebugLog.d("ValetonDrum") { "DrumPlayChanged received: playing=${event.playing}" }
                 _uiState.update { current ->
                     current.copy(drum = current.drum.copy(isPlaying = event.playing))
                 }
@@ -809,7 +809,7 @@ class PresetViewModel(
                 var retries = 0
                 while ((readback == null || differences.isNotEmpty()) && retries < 2 &&
                     midiManager.connectionState.value is MidiConnectionState.Connected) {
-                    Log.d("ValetonSave", "slot=$targetSlot readback=${retries + 1} differences=${if (readback == null) "no response" else differences.joinToString()}")
+                    DebugLog.d("ValetonSave") { "slot=$targetSlot readback=${retries + 1} differences=${if (readback == null) "no response" else differences.joinToString()}" }
                     val newer = midiManager.readPresetForVerification(targetSlot) ?: break
                     readback = newer
                     differences = PresetSaveVerifier.differences(currentPreset, newer)
@@ -965,7 +965,7 @@ class PresetViewModel(
         val currentPreset = _uiState.value.preset
         val updatedPreset = currentPreset?.copy(drumSync = sync)
         val hasUnsaved = if (currentPreset != null && currentPreset.drumSync != sync) true else _uiState.value.hasUnsavedChanges
-        Log.d("ValetonDrum", "setDrumSync: sync=$sync, newBpm=$newBpm")
+        DebugLog.d("ValetonDrum") { "setDrumSync: sync=$sync, newBpm=$newBpm" }
         _uiState.update { current ->
             current.copy(
                 preset = updatedPreset,

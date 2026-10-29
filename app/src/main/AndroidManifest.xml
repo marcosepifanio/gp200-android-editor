@@ -31,10 +31,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter>
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
-            </intent-filter>
-
             <!-- Intent Filter for opening .prst patch files from file managers, WhatsApp, downloads etc. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

@@ -9,7 +9,6 @@ import android.media.midi.MidiOutputPort
 import android.media.midi.MidiReceiver
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import com.valeton.editor.core.codec.SysExCodec
 import com.valeton.editor.core.codec.PresetWritePlan
 import com.valeton.editor.core.codec.PresetSaveVerifier
@@ -238,10 +237,7 @@ class AndroidMidiDriver internal constructor(
     }
 
     internal fun handleIncomingMidi(bytes: ByteArray) {
-        if (Log.isLoggable("ValetonMidi", Log.DEBUG) || true) {
-            val hex = bytes.joinToString(" ") { "%02X".format(it) }
-            Log.d("ValetonMidi", "RX [${bytes.size}]: $hex")
-        }
+        DebugLog.d("ValetonMidi") { "RX [${bytes.size}]: ${bytes.joinToString(" ") { "%02X".format(it) }}" }
         synchronized(incomingSysExStream) {
             for (b in bytes) {
                 if (b == 0xF0.toByte()) {
@@ -443,7 +439,7 @@ class AndroidMidiDriver internal constructor(
         // 7. Drum Machine Notifications (0x12 0x1008 / 0x1011 / 0x1001)
         val drumNotif = SysExCodec.parseDrumNotification(msg)
         if (drumNotif != null) {
-            Log.d("ValetonMidi", "Received drum notification: $drumNotif")
+            DebugLog.d("ValetonMidi") { "Received drum notification: $drumNotif" }
             when (drumNotif) {
                 is SysExCodec.DrumNotification.Sync -> _pedalEvents.tryEmit(PedalEvent.DrumSyncChanged(drumNotif.enabled))
                 is SysExCodec.DrumNotification.Pattern -> _pedalEvents.tryEmit(PedalEvent.DrumPatternChanged(drumNotif.patternId))
@@ -456,8 +452,7 @@ class AndroidMidiDriver internal constructor(
     }
 
     private fun sendBytesDirect(bytes: ByteArray) {
-        val hex = bytes.joinToString(" ") { "%02X".format(it) }
-        Log.d("ValetonMidi", "TX [${bytes.size}]: $hex")
+        DebugLog.d("ValetonMidi") { "TX [${bytes.size}]: ${bytes.joinToString(" ") { "%02X".format(it) }}" }
         try {
             inputPort?.send(bytes, 0, bytes.size)
         } catch (e: Exception) {
@@ -539,7 +534,7 @@ class AndroidMidiDriver internal constructor(
                 it.copy(effects = it.effects.filterNot { effect -> effect.slotIndex in touchedBlocks })
             }
             val commands = PresetWritePlan.commands(preset, baseline, forceSettings = touchedSettings)
-            Log.d("ValetonSave", "slot=$targetSlot forceReplay=$forceReplay replay=${commands.size} confirmedBaseline=${confirmedPresets.containsKey(targetSlot)}")
+            DebugLog.d("ValetonSave") { "slot=$targetSlot forceReplay=$forceReplay replay=${commands.size} confirmedBaseline=${confirmedPresets.containsKey(targetSlot)}" }
             for (command in commands) {
                 framer?.sendImmediate(command)
                 delay(40)
@@ -756,7 +751,7 @@ class AndroidMidiDriver internal constructor(
         pendingPresetSettings.set(true)
         val clampedBpm = bpm.coerceIn(40, 250)
         val valByte = if (enabled) 1 else 0
-        Log.d("ValetonMidi", "sendDrumSync: enabled=$enabled, bpm=$clampedBpm")
+        DebugLog.d("ValetonMidi") { "sendDrumSync: enabled=$enabled, bpm=$clampedBpm" }
 
         // 1. Build Patch Setting Param SysEx (0x1008 LE, target = 0x19) - primary command from GP-200.exe
         val patchSyncParam = SysExCodec.buildPatchSettingParam(target = 0x19, value = valByte)
