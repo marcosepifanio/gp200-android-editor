@@ -51,6 +51,9 @@ data class CategoryPill(
 object EffectPickerLogic {
     const val ALL_CATEGORY = "All"
     const val FAVORITES_CATEGORY = "Favorites"
+    const val TRADEMARK_NOTICE =
+        "Os equipamentos citados servem apenas como referência do timbre simulado. " +
+            "As marcas pertencem aos respectivos titulares, que não têm vínculo com este app nem o endossam."
 
     /**
      * Filters [effects] based on [query] and [selectedCategory].
@@ -577,6 +580,18 @@ fun EffectPickerSheet(
                                             }
                                         }
                                     }
+                                }
+
+                                item(key = "trademark_notice") {
+                                    Text(
+                                        text = EffectPickerLogic.TRADEMARK_NOTICE,
+                                        color = TextMuted,
+                                        fontSize = 11.sp,
+                                        lineHeight = 15.sp,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 12.dp, bottom = 8.dp)
+                                    )
                                 }
                             }
                         }

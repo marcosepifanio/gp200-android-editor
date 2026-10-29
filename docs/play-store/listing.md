@@ -76,3 +76,11 @@ Primeira versão de testes na Play Store.
 ```
 
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.
+
+## Pendências antes da produção
+
+Decisões tomadas para o teste interno e que devem ser revistas antes de abrir o app ao público:
+
+- **Marcas no `basedOn`:** 197 dos 305 efeitos citam equipamentos de terceiros (por exemplo, "Ibanez® TS-808") no seletor e no editor. Para o teste interno, o texto foi mantido e o seletor ganhou um aviso de que os nomes são só referência de timbre, sem vínculo ou endosso dos titulares.
+- **Rótulos dos SVGs:** os desenhos são genéricos e não têm logotipos, mas alguns exibem números de modelo de terceiros, como "SD·1", "BD·2", "808" e "OD·9". Mantidos por ora; avalie trocar pelos nomes dos modelos da Valeton.
+- **Licença do gp200editor:** o `LICENSE` de [phash/gp200editor](https://github.com/phash/gp200editor) (commit `fed73a6`, "chore: add GPL-3.0 license") não é o texto oficial da GPL-3.0: há trechos reescritos e outros ausentes, como a definição de "Corresponding Source", e o GitHub classifica a licença como "Other". A intenção declarada no commit é GPL-3.0. Peça ao autor a confirmação e a troca pelo texto oficial antes da distribuição pública.
