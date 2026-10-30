@@ -13,6 +13,7 @@ import com.valeton.editor.core.model.QuickKnobAssignment
 import com.valeton.editor.core.model.KnobParam
 import kotlin.math.roundToInt
 import com.valeton.editor.repository.PresetLibraryRepository
+import com.valeton.editor.repository.UserModelNamesRepository
 import com.valeton.editor.repository.PresetNamesRepository
 import com.valeton.editor.usb.MidiConnectionManager
 import com.valeton.editor.usb.MidiConnectionState
@@ -25,12 +26,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 
 class PresetViewModel(
     private val midiManager: MidiConnectionManager,
     private val repository: PresetNamesRepository? = null,
     private val libraryRepository: PresetLibraryRepository? = null,
+    private val userModelNamesRepository: UserModelNamesRepository? = null,
     coroutineScope: CoroutineScope? = null
 ) : ViewModel() {
 
@@ -41,6 +44,8 @@ class PresetViewModel(
     var midiDelayProvider: suspend (Long) -> Unit = { kotlinx.coroutines.delay(it) }
     private var lastSavedSlot: Int? = null
     private var lastSavedTimestamp: Long = 0L
+    /** Name a slot had before its first unsaved local rename, so "save as" can restore the source. */
+    private var nameBeforeLocalRename: Pair<Int, String>? = null
     private val _uiState = MutableStateFlow(PresetUiState())
     val uiState: StateFlow<PresetUiState> = _uiState.asStateFlow()
 
@@ -77,6 +82,18 @@ class PresetViewModel(
             }
             if (allConfirmed) {
                 midiManager.preloadCachedNames(initialNames.mapIndexed { idx, name -> idx to name }.toMap())
+            }
+        }
+
+        userModelNamesRepository?.load()?.takeIf { it.isNotEmpty() }?.let { cached ->
+            _uiState.update { it.copy(userModelNames = cached) }
+        }
+
+        scope.launch {
+            midiManager.userModelNames.collect { received ->
+                if (received.isEmpty()) return@collect
+                val merged = _uiState.updateAndGet { it.copy(userModelNames = it.userModelNames + received) }.userModelNames
+                scope.launch(ioDispatcher) { userModelNamesRepository?.save(merged) }
             }
         }
 
@@ -386,6 +403,7 @@ class PresetViewModel(
                 drum = it.drum.copy(isSyncWithPatch = isSync, bpm = newDrumBpm)
             )
         }
+        nameBeforeLocalRename = null
     }
 
     fun importPreset(preset: GP200Preset, targetSlot: Int, saveToPedal: Boolean) {
@@ -687,6 +705,9 @@ class PresetViewModel(
         val currentPreset = _uiState.value.preset ?: return
         val currentSlot = _uiState.value.currentSlotNumber
         val cleanName = newName.take(16)
+        if (nameBeforeLocalRename?.first != currentSlot) {
+            nameBeforeLocalRename = currentSlot to (_uiState.value.presetNames.getOrNull(currentSlot) ?: currentPreset.patchName)
+        }
         _uiState.update {
             it.copy(
                 preset = currentPreset.copy(patchName = cleanName),
@@ -695,6 +716,63 @@ class PresetViewModel(
         }
         updatePresetNameLocally(currentSlot, cleanName)
         midiManager.sendPatchName(cleanName)
+    }
+
+    /**
+     * Saves the edited patch with [name], [author] and [volume] to [targetSlot]. Another slot reuses the
+     * import path: switch the pedal to the target, replay the whole preset, commit and verify. The source
+     * slot is left as the pedal has it.
+     */
+    fun saveAs(targetSlot: Int, name: String, author: String, volume: Int) {
+        if (editingBusy()) return
+        val edited = _uiState.value.preset ?: return
+        if (midiManager.connectionState.value !is MidiConnectionState.Connected) {
+            _uiState.update { it.copy(errorMessage = "Conecte a pedaleira antes de salvar.") }
+            return
+        }
+        val target = targetSlot.coerceIn(0, 255)
+        val source = _uiState.value.currentSlotNumber
+        if (target == source) {
+            renamePatch(name)
+            updatePatchAuthor(author)
+            updatePatchVolume(volume)
+            saveToDevice()
+            return
+        }
+        val sourceName = _uiState.value.cachedLibrary[source]?.patchName
+            ?: nameBeforeLocalRename?.takeIf { it.first == source }?.second
+        nameBeforeLocalRename = null
+        val preset = edited.copy(patchName = name.take(16), author = author.take(16), patchVolume = volume)
+        _uiState.update {
+            it.copy(
+                preset = preset,
+                presetNames = it.presetNames.mapIndexed { index, current ->
+                    when {
+                        index == source && sourceName != null -> sourceName
+                        index == target -> preset.patchName
+                        else -> current
+                    }
+                },
+                currentSlotNumber = target,
+                hasUnsavedChanges = true,
+                isSaving = true,
+                errorMessage = null
+            )
+        }
+        if (sourceName != null) {
+            midiManager.restoreSlotName(source, sourceName)
+            repository?.updateSlotName(source, sourceName)
+        }
+        scope.launch {
+            try {
+                midiManager.pausePresetNamesScan()
+                midiManager.sendPresetChange(target)
+                midiDelayProvider(200)
+            } finally {
+                _uiState.update { it.copy(isSaving = false) }
+            }
+            saveToDevice(target, forceReplay = true)
+        }
     }
 
     fun renameSlot(slot: Int, newName: String) {

@@ -5,7 +5,9 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.valeton.editor.core.codec.SysExCodec
 import com.valeton.editor.ui.theme.StudioPalette
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun StudioHeader(
     connected: Boolean,
@@ -39,6 +42,7 @@ fun StudioHeader(
     syncProgress: Int,
     onPatchClick: () -> Unit,
     onSaveClick: () -> Unit,
+    onSaveLongClick: () -> Unit = {},
     onImportClick: (() -> Unit)? = null,
     saving: Boolean = false,
     modifier: Modifier = Modifier
@@ -219,7 +223,7 @@ fun StudioHeader(
                         else StudioPalette.Surface
                     )
                     .border(1.dp, saveBtnBorder, RoundedCornerShape(8.dp))
-                    .clickable(enabled = !saving, onClick = onSaveClick)
+                    .combinedClickable(enabled = !saving, onClick = onSaveClick, onLongClick = onSaveLongClick)
                     .padding(horizontal = 10.dp),
                 contentAlignment = Alignment.Center
             ) {

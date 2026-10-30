@@ -4,6 +4,7 @@ import com.valeton.editor.core.model.DrumGenre
 import com.valeton.editor.core.model.EffectSlot
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.repository.PresetLibraryRepository
+import com.valeton.editor.repository.UserModelNamesRepository
 import com.valeton.editor.usb.FullSyncProgress
 import com.valeton.editor.usb.MidiConnectionManager
 import com.valeton.editor.usb.MidiConnectionState
@@ -25,6 +26,9 @@ class FakeMidiManager : MidiConnectionManager {
 
     val _fullSyncProgress = MutableStateFlow<FullSyncProgress?>(null)
     override val fullSyncProgress: StateFlow<FullSyncProgress?> = _fullSyncProgress
+
+    val _userModelNames = MutableStateFlow<Map<Int, String>>(emptyMap())
+    override val userModelNames: StateFlow<Map<Int, String>> = _userModelNames
 
     var fullSyncStarted = false
     var fullSyncCancelled = false
@@ -119,7 +123,9 @@ class FakeMidiManager : MidiConnectionManager {
     }
 
     var saveHandler: suspend (GP200Preset, Int) -> GP200Preset? = { preset, _ -> preset }
+    val forceReplays = mutableListOf<Boolean>()
     override suspend fun savePreset(preset: GP200Preset, slot: Int, forceReplay: Boolean): GP200Preset? {
+        forceReplays.add(forceReplay)
         if (forceReplay) sendDrumSync(preset.drumSync, preset.patchTempo)
         sendAuthorName(preset.author.take(16))
         sendSaveCommit(preset.patchName, slot)
@@ -132,6 +138,11 @@ class FakeMidiManager : MidiConnectionManager {
 
     override fun sendPatchName(name: String) {
         patchNamesSent.add(name)
+    }
+
+    val restoredNames = mutableListOf<Pair<Int, String>>()
+    override fun restoreSlotName(slot: Int, name: String) {
+        restoredNames.add(slot to name)
     }
 
     override fun sendAuthorName(author: String) {
@@ -1810,6 +1821,150 @@ class PresetViewModelTest {
         assertTrue(vm.uiState.value.errorMessage!!.contains("volume"))
     }
 
+
+    @Test
+    fun `cached user model names appear in state at startup`() {
+        UserModelNamesRepository(tempDir).save(mapOf(168820736 to "ir1"))
+        val vm = PresetViewModel(
+            FakeMidiManager(),
+            userModelNamesRepository = UserModelNamesRepository(tempDir),
+            coroutineScope = CoroutineScope(Dispatchers.Unconfined)
+        )
+        assertEquals(mapOf(168820736 to "ir1"), vm.uiState.value.userModelNames)
+    }
+
+    @Test
+    fun `names from the driver merge over the cache and are persisted`() {
+        UserModelNamesRepository(tempDir).save(mapOf(168820736 to "old", 168820737 to "keep"))
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(
+            midi,
+            userModelNamesRepository = UserModelNamesRepository(tempDir),
+            coroutineScope = CoroutineScope(Dispatchers.Unconfined)
+        )
+        midi._userModelNames.value = mapOf(168820736 to "ir1")
+        val expected = mapOf(168820736 to "ir1", 168820737 to "keep")
+        assertEquals(expected, vm.uiState.value.userModelNames)
+        assertEquals(expected, UserModelNamesRepository(tempDir).load())
+    }
+
+    @Test
+    fun `names stay after disconnect`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(
+            midi,
+            userModelNamesRepository = UserModelNamesRepository(tempDir),
+            coroutineScope = CoroutineScope(Dispatchers.Unconfined)
+        )
+        midi._userModelNames.value = mapOf(251658245 to "nam1")
+        midi._connectionState.value = MidiConnectionState.Disconnected
+        assertEquals(mapOf(251658245 to "nam1"), vm.uiState.value.userModelNames)
+    }
+
+    private fun saveAsViewModel(midi: FakeMidiManager) =
+        PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined)).apply {
+            midiDelayProvider = {}
+            loadPreset(createInitialPreset(), slot = 0)
+        }
+
+    @Test
+    fun `saveAs to current slot behaves like saveToDevice`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        vm.saveAs(0, "Novo", "Autor", 70)
+        assertTrue(midi.presetChangesSent.isEmpty())
+        assertEquals(listOf(false), midi.forceReplays)
+        assertEquals(listOf("Novo" to 0), midi.saves)
+        assertEquals(70, vm.uiState.value.preset?.patchVolume)
+        assertEquals("Autor", vm.uiState.value.preset?.author)
+    }
+
+    @Test
+    fun `saveAs to another slot switches slot, replays and saves there`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        vm.saveAs(10, "Novo", "Autor", 70)
+        val state = vm.uiState.value
+        assertEquals(listOf(10), midi.presetChangesSent)
+        assertEquals(listOf(true), midi.forceReplays)
+        assertEquals(listOf("Novo" to 10), midi.saves)
+        assertEquals(10, state.currentSlotNumber)
+        assertEquals("Novo", state.presetNames[10])
+        assertEquals(70, state.cachedLibrary[10]?.patchVolume)
+        assertFalse(state.hasUnsavedChanges)
+    }
+
+    @Test
+    fun `saveAs to another slot leaves the source untouched`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        val sourceName = vm.uiState.value.presetNames[0]
+        val sourceCache = vm.uiState.value.cachedLibrary[0]
+        vm.saveAs(10, "Novo", "Autor", 70)
+        assertEquals(sourceName, vm.uiState.value.presetNames[0])
+        assertEquals(sourceCache, vm.uiState.value.cachedLibrary[0])
+        assertTrue(midi.patchNamesSent.isEmpty(), "Source edit buffer must not be renamed")
+    }
+
+    @Test
+    fun `saveAs restores the source name after an earlier local rename`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        val sourceName = vm.uiState.value.presetNames[0]
+        vm.renamePatch("Temp")
+        assertEquals("Temp", vm.uiState.value.presetNames[0])
+        vm.saveAs(10, "Novo", "Autor", 70)
+        assertEquals(sourceName, vm.uiState.value.presetNames[0])
+        assertEquals("Novo", vm.uiState.value.presetNames[10])
+        assertEquals(listOf(0 to sourceName), midi.restoredNames, "Driver name list must be restored too")
+    }
+
+    @Test
+    fun `failed confirmation keeps changes pending on the target slot`() {
+        val midi = FakeMidiManager().apply { saveHandler = { _, _ -> null } }
+        val vm = saveAsViewModel(midi)
+        vm.saveAs(10, "Novo", "Autor", 70)
+        val state = vm.uiState.value
+        assertEquals(10, state.currentSlotNumber)
+        assertTrue(state.hasUnsavedChanges)
+        assertTrue(state.errorMessage!!.startsWith("Não foi possível confirmar o salvamento"))
+        assertEquals("Novo", state.preset?.patchName)
+    }
+
+    @Test
+    fun `PresetLoaded for the target during saveAs does not replace the edited preset`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        val other = GP200Preset(patchName = "Old Target", effects = emptyList())
+        vm.midiDelayProvider = { midi._pedalEvents.tryEmit(PedalEvent.PresetLoaded(other, 10)) }
+        vm.saveAs(10, "Novo", "Autor", 70)
+        assertEquals("Novo", vm.uiState.value.preset?.patchName)
+        assertEquals(listOf("Novo" to 10), midi.saves)
+    }
+
+    @Test
+    fun `saveAs while disconnected shows error and changes nothing`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        midi._connectionState.value = MidiConnectionState.Disconnected
+        vm.saveAs(10, "Novo", "Autor", 70)
+        val state = vm.uiState.value
+        assertEquals("Conecte a pedaleira antes de salvar.", state.errorMessage)
+        assertTrue(midi.presetChangesSent.isEmpty())
+        assertEquals(0, state.currentSlotNumber)
+        assertEquals("Lead Rock", state.preset?.patchName)
+    }
+
+    @Test
+    fun `saveAs is ignored while busy`() {
+        val midi = FakeMidiManager()
+        val vm = saveAsViewModel(midi)
+        vm.forceFullLibraryResync()
+        assertTrue(vm.uiState.value.isPerformingFullSync)
+        vm.saveAs(10, "Novo", "Autor", 70)
+        assertTrue(midi.presetChangesSent.isEmpty())
+        assertTrue(midi.saves.isEmpty())
+    }
 }
 
 

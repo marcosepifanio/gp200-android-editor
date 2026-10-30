@@ -7,6 +7,8 @@ import com.valeton.editor.core.model.CtrlAssignment
 import com.valeton.editor.core.model.EffectSlot
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.core.model.QuickKnobAssignment
+import com.valeton.editor.core.model.UserModelKind
+import com.valeton.editor.core.model.UserModelName
 import java.nio.charset.StandardCharsets
 
 object SysExCodec {
@@ -323,29 +325,15 @@ object SysExCodec {
         )
     }
 
+    /** Effect change record [16 00 08 00 block 00 76 02][effectId LE32]; all four id bytes matter (User IR is 0x0A10xxxx). */
     fun buildEffectChange(blockIndex: Int, effectId: Int): ByteArray {
-        val moduleType = ((effectId shr 24) and 0xFF).toByte()
-        val variant = effectId and 0xFF
-        val vh = ((variant shr 4) and 0x0F).toByte()
-        val vl = (variant and 0x0F).toByte()
-        return byteArrayOf(
-            0xF0.toByte(), 0x21, 0x25, 0x7E, 0x47, 0x50, 0x2D, 0x32,
-            0x12, 0x14,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x04, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x01, 0x06,
-            0x00, 0x00, 0x00,
-            0x08,
-            0x00, 0x00, 0x00,
-            (blockIndex and 0x0F).toByte(),
-            0x00, 0x00,
-            0x07, 0x06, 0x00, 0x02,
-            vh, vl,
-            0x00, 0x00, 0x00, 0x00, 0x00,
-            moduleType,
-            0xF7.toByte()
+        val payload = byteArrayOf(
+            0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x16, 0x00, 0x08, 0x00, (blockIndex and 0x0F).toByte(), 0x00, 0x76, 0x02,
+            (effectId and 0xFF).toByte(), ((effectId shr 8) and 0xFF).toByte(),
+            ((effectId shr 16) and 0xFF).toByte(), ((effectId shr 24) and 0xFF).toByte()
         )
+        return buildFrame(0x12, payload)
     }
 
     fun buildParamChange(blockIndex: Int, paramIndex: Int, effectId: Int, value: Float): ByteArray {
@@ -744,5 +732,46 @@ object SysExCodec {
             len++
         }
         return String(decoded, 28, len, StandardCharsets.US_ASCII).trim()
+    }
+
+    /** Tail the desktop editor sent with name reads (uninitialized stack); fallback if zeros are rejected. */
+    val USER_MODEL_CAPTURED_TAIL: ByteArray
+        get() = byteArrayOf(
+            0x5e, 0x9e.toByte(), 0x67, 0x00, 0xec.toByte(), 0x4e, 0x1c, 0x25, 0x6c, 0x5d,
+            0x78, 0x02, 0xb0.toByte(), 0xf9.toByte(), 0x92.toByte(), 0x02, 0x01, 0xfa.toByte(), 0xd1.toByte(), 0x07
+        )
+
+    /** Read request for one user IR/SnapTone name: [recordId LE16][18 00][index LE16][01 00][tail 20B]. */
+    fun buildUserModelNameRequest(kind: UserModelKind, index: Int, tail: ByteArray = ByteArray(20)): ByteArray {
+        val payload = ByteArray(28)
+        payload[0] = (kind.recordId and 0xFF).toByte()
+        payload[1] = ((kind.recordId shr 8) and 0xFF).toByte()
+        payload[2] = 0x18
+        payload[4] = (index and 0xFF).toByte()
+        payload[5] = ((index shr 8) and 0xFF).toByte()
+        payload[6] = 0x01
+        System.arraycopy(tail, 0, payload, 8, minOf(20, tail.size))
+        return buildFrame(0x11, payload)
+    }
+
+    /** Response: [recordId LE16][18 00][index LE16][6 zero bytes][name 16B, NUL-terminated; bytes after NUL are stale]. */
+    fun parseUserModelNameResponse(msg: ByteArray): UserModelName? {
+        if (!isSysEx(msg, 0x12, 0x1C) || msg.size != 14 + 56) return null
+        val nibbles = msg.copyOfRange(13, msg.lastIndex)
+        if (nibbles.any { (it.toInt() and 0xFF) > 15 }) return null
+        val payload = nibbleDecode(nibbles)
+        val recordId = (payload[0].toInt() and 0xFF) or ((payload[1].toInt() and 0xFF) shl 8)
+        val kind = UserModelKind.entries.firstOrNull { it.recordId == recordId } ?: return null
+        if (payload[2] != 0x18.toByte() || payload[3] != 0.toByte()) return null
+        val index = (payload[4].toInt() and 0xFF) or ((payload[5].toInt() and 0xFF) shl 8)
+        if (index !in 0 until kind.slotCount) return null
+        val name = buildString {
+            for (i in 12 until 28) {
+                val c = payload[i].toInt() and 0xFF
+                if (c == 0) break
+                if (c in 0x20..0x7E) append(c.toChar())
+            }
+        }.trim()
+        return UserModelName(kind, index, name)
     }
 }

@@ -38,6 +38,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.valeton.editor.core.catalog.EffectCatalog
 import com.valeton.editor.core.model.EffectDefinition
+import com.valeton.editor.core.model.UserModelKind
+import com.valeton.editor.ui.components.LocalUserModelNames
+import com.valeton.editor.ui.components.effectDisplayName
 import com.valeton.editor.core.model.ModuleType
 import com.valeton.editor.repository.FavoriteEffectsRepository
 import com.valeton.editor.ui.components.PedalArtwork
@@ -63,7 +66,8 @@ object EffectPickerLogic {
     fun filterEffects(
         effects: List<EffectDefinition>,
         query: String = "",
-        selectedCategory: String = ALL_CATEGORY
+        selectedCategory: String = ALL_CATEGORY,
+        userNames: Map<Int, String> = emptyMap()
     ): List<EffectDefinition> {
         val trimmed = query.trim()
         val filterByCategory = selectedCategory.isNotBlank() && !selectedCategory.equals(ALL_CATEGORY, ignoreCase = true)
@@ -75,11 +79,22 @@ object EffectPickerLogic {
             if (trimmed.isEmpty()) {
                 true
             } else {
-                effect.name.contains(trimmed, ignoreCase = true) ||
-                    effect.basedOn.contains(trimmed, ignoreCase = true) ||
-                    effect.category.contains(trimmed, ignoreCase = true)
+                matchesQuery(effect, trimmed, userNames)
             }
         }
+    }
+
+    private fun matchesQuery(effect: EffectDefinition, trimmed: String, userNames: Map<Int, String>): Boolean =
+        effect.name.contains(trimmed, ignoreCase = true) ||
+            userNames[effect.effectId].orEmpty().contains(trimmed, ignoreCase = true) ||
+            effect.basedOn.contains(trimmed, ignoreCase = true) ||
+            effect.category.contains(trimmed, ignoreCase = true)
+
+    /** Catalog name plus slot number for user IRs/SnapTones (SnapTones numbered per block), else null. */
+    fun userModelSubtitle(effect: EffectDefinition): String? = UserModelKind.entries.firstNotNullOfOrNull { kind ->
+        val index = effect.effectId - kind.firstEffectId
+        if (index !in 0 until kind.slotCount) null
+        else "${effect.name} ${if (kind == UserModelKind.SNAPTONE) index % 5 + 1 else index + 1}"
     }
 
     /**
@@ -90,17 +105,14 @@ object EffectPickerLogic {
     fun buildCategoryCounts(
         effects: List<EffectDefinition>,
         categories: List<String>,
-        query: String = ""
+        query: String = "",
+        userNames: Map<Int, String> = emptyMap()
     ): List<CategoryPill> {
         val trimmed = query.trim()
         val matchingEffects = if (trimmed.isEmpty()) {
             effects
         } else {
-            effects.filter {
-                it.name.contains(trimmed, ignoreCase = true) ||
-                    it.basedOn.contains(trimmed, ignoreCase = true) ||
-                    it.category.contains(trimmed, ignoreCase = true)
-            }
+            effects.filter { matchesQuery(it, trimmed, userNames) }
         }
 
         val allPill = CategoryPill(ALL_CATEGORY, matchingEffects.size)
@@ -225,20 +237,21 @@ fun EffectPickerSheet(
         allModuleEffects.filter { it.effectId in favoriteEffectIds }
     }
 
-    val categoryPills = remember(allModuleEffects, moduleCategories, searchQuery, favoriteModuleEffects) {
-        EffectPickerLogic.buildCategoryCounts(allModuleEffects, moduleCategories, searchQuery).toMutableList().apply {
+    val userNames = LocalUserModelNames.current
+    val categoryPills = remember(allModuleEffects, moduleCategories, searchQuery, favoriteModuleEffects, userNames) {
+        EffectPickerLogic.buildCategoryCounts(allModuleEffects, moduleCategories, searchQuery, userNames).toMutableList().apply {
             if (favoriteModuleEffects.isNotEmpty()) {
-                val matchingFavorites = EffectPickerLogic.filterEffects(favoriteModuleEffects, searchQuery)
+                val matchingFavorites = EffectPickerLogic.filterEffects(favoriteModuleEffects, searchQuery, userNames = userNames)
                 add(1, CategoryPill(EffectPickerLogic.FAVORITES_CATEGORY, matchingFavorites.size))
             }
         }
     }
 
-    val filteredEffects = remember(allModuleEffects, searchQuery, selectedCategory, favoriteModuleEffects) {
+    val filteredEffects = remember(allModuleEffects, searchQuery, selectedCategory, favoriteModuleEffects, userNames) {
         if (selectedCategory == EffectPickerLogic.FAVORITES_CATEGORY) {
-            EffectPickerLogic.filterEffects(favoriteModuleEffects, searchQuery)
+            EffectPickerLogic.filterEffects(favoriteModuleEffects, searchQuery, userNames = userNames)
         } else {
-            EffectPickerLogic.filterEffects(allModuleEffects, searchQuery, selectedCategory)
+            EffectPickerLogic.filterEffects(allModuleEffects, searchQuery, selectedCategory, userNames)
         }
     }
 
@@ -505,9 +518,10 @@ fun EffectPickerSheet(
                                                 .padding(horizontal = 10.dp, vertical = 8.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
+                                            val displayName = effectDisplayName(effect, userNames)
                                             PedalArtwork(
                                                 svgFile = effect.svgFile,
-                                                name = effect.name,
+                                                name = displayName,
                                                 accentColor = accentColor,
                                                 modifier = Modifier
                                                     .size(80.dp, 44.dp)
@@ -520,16 +534,17 @@ fun EffectPickerSheet(
                                                 modifier = Modifier.weight(1f)
                                             ) {
                                                 Text(
-                                                    text = effect.name,
+                                                    text = displayName,
                                                     color = TextPrimary,
                                                     fontSize = 15.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
-                                                if (effect.basedOn.isNotBlank()) {
+                                                val subtitle = EffectPickerLogic.userModelSubtitle(effect) ?: effect.basedOn
+                                                if (subtitle.isNotBlank()) {
                                                     Text(
-                                                        text = effect.basedOn,
+                                                        text = subtitle,
                                                         color = TextSecondary,
                                                         fontSize = 12.sp,
                                                         maxLines = 1,
@@ -571,9 +586,9 @@ fun EffectPickerSheet(
                                                 Icon(
                                                     imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                                                     contentDescription = if (isFavorite) {
-                                                        "Remover ${effect.name} dos favoritos"
+                                                        "Remover $displayName dos favoritos"
                                                     } else {
-                                                        "Adicionar ${effect.name} aos favoritos"
+                                                        "Adicionar $displayName aos favoritos"
                                                     },
                                                     tint = if (isFavorite) Color(0xFFFFC857) else TextSecondary
                                                 )

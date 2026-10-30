@@ -508,4 +508,14 @@ class SysExCodecTest {
         assertThrows(IllegalArgumentException::class.java) { SysExCodec.parseReadChunks(corrupt) }
     }
 
+
+    @Test
+    fun `buildEffectChange keeps the middle bytes of user IR effect ids`() {
+        // Desktop editor capture (GP-200 LT): selecting User IR 1 in CAB sent effect id 0x0A100000.
+        val msg = SysExCodec.buildEffectChange(blockIndex = 5, effectId = 0x0A100000)
+        val payload = SysExCodec.nibbleDecode(msg.copyOfRange(13, msg.lastIndex))
+        assertEquals(20, payload.size)
+        assertEquals(0x0A100000, java.nio.ByteBuffer.wrap(payload, 16, 4).order(java.nio.ByteOrder.LITTLE_ENDIAN).int)
+        assertEquals(5, payload[12].toInt())
+    }
 }

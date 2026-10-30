@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.valeton.editor.ui.components.LocalUserModelNames
+import com.valeton.editor.ui.components.effectDisplayName
 import com.valeton.editor.core.catalog.EffectCatalog
 import com.valeton.editor.core.model.*
 import com.valeton.editor.ui.components.PedalArtwork
@@ -169,7 +171,7 @@ fun StudioPedalEditorScreen(
 
                 PedalArtwork(
                     svgFile = effectDef?.svgFile ?: "",
-                    name = effectDef?.name ?: module.code,
+                    name = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: module.code,
                     accentColor = spec.bodyDeep,
                     modifier = Modifier.weight(1f).fillMaxHeight()
                 )
@@ -209,7 +211,7 @@ fun StudioPedalEditorScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = effectDef?.name ?: "Bypass",
+                    text = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: "Bypass",
                     color = StudioPalette.TextPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,

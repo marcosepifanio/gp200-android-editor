@@ -15,6 +15,7 @@ O preset representa 11 blocos da cadeia: PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, D
   - `app/src/main/kotlin/com/valeton/editor/ui/` contém telas Compose, componentes e tema. As telas principais estão em `chain/`, `manage/`, `drums/` e `controls/`.
   - `app/src/main/kotlin/com/valeton/editor/repository/PresetLibraryRepository.kt` persiste a biblioteca local em `library_cache.json`.
   - `app/src/main/kotlin/com/valeton/editor/repository/FavoriteEffectsRepository.kt` persiste localmente os IDs dos efeitos favoritos, independentemente dos presets e da sincronização.
+  - `app/src/main/kotlin/com/valeton/editor/repository/UserModelNamesRepository.kt` guarda em `user_model_names.json` os nomes dos IRs e SnapTones lidos da pedaleira (`effectId → nome`), separados da biblioteca de presets.
 - `core-protocol/` — Kotlin/JVM sem dependência de Android para modelos, catálogo e formatos de preset/protocolo.
   - `core-protocol/src/main/kotlin/com/valeton/editor/core/model/` contém `GP200Preset`, efeitos, tipos de bloco e mapeamentos.
   - `core-protocol/src/main/kotlin/com/valeton/editor/core/catalog/EffectCatalog.kt` define os modelos de efeitos e seus parâmetros.
@@ -32,6 +33,7 @@ Os módulos e plugins Gradle estão declarados em `settings.gradle.kts` e nos `b
 ## Áreas funcionais da aplicação
 
 - **Cadeia:** `app/src/main/kotlin/com/valeton/editor/ui/chain/` exibe os blocos, a ordem e controles globais do patch; a edição detalhada de efeitos fica em `app/src/main/kotlin/com/valeton/editor/ui/editor/`.
+- **Nomes de IR e SnapTone:** após cada conexão, o driver lê os nomes dos 20 User IRs e 10 SnapTones (`0x1009`/`0x1012`) antes da varredura de nomes de preset; sincronização completa e salvamento esperam essa leitura. A UI mostra esses nomes por `effectDisplayName`/`LocalUserModelNames` (`app/src/main/kotlin/com/valeton/editor/ui/components/UserModelNames.kt`). Os nomes não entram no preset, no `.prst` nem no cache da biblioteca. Protocolo e evidência em [`docs/protocol/user-model-names.md`](docs/protocol/user-model-names.md).
 - **Seleção de efeitos:** `app/src/main/kotlin/com/valeton/editor/ui/editor/EffectPickerSheet.kt` busca e filtra modelos por módulo e categoria. Favoritos são guardados como preferência local por `effectId`; o filtro só aparece se houver favoritos compatíveis com o módulo atual e não participa de importação, cache, `.prst` ou MIDI.
 - **Presets:** `app/src/main/kotlin/com/valeton/editor/ui/manage/` lista e gerencia slots, importa `.prst`, salva na pedaleira, exporta para armazenamento local e compartilha por outros apps.
 - **Ritmos:** `app/src/main/kotlin/com/valeton/editor/ui/drums/` controla reprodução, padrão, gênero, volume e andamento; padrões ficam no catálogo `core-protocol/src/main/kotlin/com/valeton/editor/core/catalog/DrumCatalog.kt`.
@@ -58,6 +60,8 @@ Ao mexer neste fluxo:
 - não elimine regras de normalização do dispositivo sem evidência de hardware;
 - mantenha o estado visível e o resultado da leitura de confirmação coerentes;
 - trate eventos de pedal como eventos de hardware, não automaticamente como alterações que devam substituir o estado editado no app.
+
+O botão salvar do cabeçalho grava no slot atual; o toque longo abre o diálogo "Configurações do patch" (nome, autor, volume e local do patch). Salvar em outro slot (`PresetViewModel.saveAs`) troca a pedaleira para o destino, reenvia o preset inteiro e confirma pela leitura, sempre após confirmação do usuário; o slot de origem não muda.
 
 Preserve os bloqueios de edição durante salvamento, importação e sincronização completa, tanto na UI quanto no view model. Os mapeamentos de controles também ficam bloqueados durante a sincronização do preset atual. Ao adicionar ações, consulte `editingBusy()`, `controlsBusy()` e as condições usadas em `MainActivity`.
 

@@ -36,6 +36,8 @@ interface MidiConnectionManager {
     val presetNamesState: StateFlow<List<String>>
     val namesSyncProgress: StateFlow<Int>
     val fullSyncProgress: StateFlow<FullSyncProgress?> get() = MutableStateFlow(null)
+    /** Names of user IRs and SnapTones read from the pedal, keyed by catalog effectId. */
+    val userModelNames: StateFlow<Map<Int, String>> get() = MutableStateFlow(emptyMap())
     fun startFullLibrarySync() {}
     fun cancelFullLibrarySync() {}
 
@@ -49,6 +51,8 @@ interface MidiConnectionManager {
     fun sendCtrlAssignment(index: Int, assignment: CtrlAssignment) {}
     fun sendSaveCommit(presetName: String, slot: Int)
     fun sendPatchName(name: String)
+    /** Puts a slot's confirmed name back after an unsaved local rename ("save as" leaves the source untouched). */
+    fun restoreSlotName(slot: Int, name: String) {}
     fun sendAuthorName(author: String) {}
     fun sendPresetChange(slot: Int)
     fun sendControlChange(cc: Int, value: Int, channel: Int = 0)

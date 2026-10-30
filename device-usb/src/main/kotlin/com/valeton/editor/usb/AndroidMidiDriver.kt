@@ -15,6 +15,7 @@ import com.valeton.editor.core.codec.PresetSaveVerifier
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.core.model.QuickKnobAssignment
 import com.valeton.editor.core.model.CtrlAssignment
+import com.valeton.editor.core.model.UserModelKind
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
@@ -61,6 +62,16 @@ class AndroidMidiDriver internal constructor(
     override val fullSyncProgress: StateFlow<FullSyncProgress?> = _fullSyncProgress.asStateFlow()
     private var fullSyncJob: Job? = null
     private var currentSyncSlotDeferred: CompletableDeferred<GP200Preset>? = null
+
+    private val _userModelNames = MutableStateFlow<Map<Int, String>>(emptyMap())
+    override val userModelNames: StateFlow<Map<Int, String>> = _userModelNames.asStateFlow()
+    /** Zeros by default; switch to SysExCodec.USER_MODEL_CAPTURED_TAIL if the pedal ignores them. */
+    internal var userModelNameRequestTail: ByteArray = ByteArray(20)
+    private var userModelNamesJob: Job? = null
+    @Volatile private var awaitedUserModel: Pair<UserModelKind, Int>? = null
+    @Volatile private var userModelNameDeferred: CompletableDeferred<Unit>? = null
+    /** Collects names during a read so they are published once, not 30 times. */
+    @Volatile private var userModelReadBuffer: MutableMap<Int, String>? = null
 
     private var scannerJob: Job? = null
     private var scannerPausedUntilMs = 0L
@@ -226,11 +237,7 @@ class AndroidMidiDriver internal constructor(
                 }
                 delay(1200)
                 if (_connectionState.value is MidiConnectionState.Handshaking) {
-                    _connectionState.value = MidiConnectionState.Connected(
-                        deviceName = deviceName,
-                        activeSlot = currentActiveSlot
-                    )
-                    startPresetNamesScan()
+                    markConnected(deviceName, currentActiveSlot)
                 }
             }
         }, handler)
@@ -256,6 +263,14 @@ class AndroidMidiDriver internal constructor(
     }
 
     private fun processCompleteSysEx(msg: ByteArray) {
+        // 0. User IR / SnapTone name (0x12, 28-byte record 0x1009/0x1012)
+        SysExCodec.parseUserModelNameResponse(msg)?.let { response ->
+            val entry = response.kind.effectId(response.index) to response.name
+            val buffer = userModelReadBuffer
+            if (buffer != null) buffer[entry.first] = entry.second else _userModelNames.update { it + entry }
+            if (awaitedUserModel == (response.kind to response.index)) userModelNameDeferred?.complete(Unit)
+            return
+        }
         // 1. Preset Read Chunk (0x12 0x18)
         if (SysExCodec.isSysEx(msg, 0x12, 0x18)) {
             val offset = if (msg.size >= 13) (msg[11].toInt() and 0xFF) or ((msg[12].toInt() and 0xFF) shl 8) else -1
@@ -356,8 +371,7 @@ class AndroidMidiDriver internal constructor(
 
                                 if (_connectionState.value is MidiConnectionState.Handshaking) {
                                     val name = activeDevice?.info?.properties?.getString(MidiDeviceInfo.PROPERTY_NAME) ?: "Valeton GP-200"
-                                    _connectionState.value = MidiConnectionState.Connected(deviceName = name, activeSlot = targetSlot)
-                                    startPresetNamesScan()
+                                    markConnected(name, targetSlot)
                                 }
                             }
                         }
@@ -512,6 +526,7 @@ class AndroidMidiDriver internal constructor(
     }
 
     override suspend fun savePreset(preset: GP200Preset, slot: Int, forceReplay: Boolean): GP200Preset? {
+        userModelNamesJob?.join()
         if (saveReadDeferred != null || fullSyncJob?.isActive == true ||
             (rawSender == null && _connectionState.value !is MidiConnectionState.Connected)) return null
         val targetSlot = slot.coerceIn(0, 255)
@@ -606,6 +621,11 @@ class AndroidMidiDriver internal constructor(
         coroutineScope.launch {
             framer?.sendImmediate(msg)
         }
+    }
+
+    override fun restoreSlotName(slot: Int, name: String) {
+        if (slot !in 0..255) return
+        _presetNamesState.update { names -> names.mapIndexed { index, current -> if (index == slot) name else current } }
     }
 
     override fun sendPatchName(name: String) {
@@ -801,6 +821,50 @@ class AndroidMidiDriver internal constructor(
         sendControlChange(cc = 16, value = scaledKnob, channel = 0)
     }
 
+    /** Starts the name read before publishing Connected, so a full sync triggered by the state waits for it. */
+    internal fun markConnected(deviceName: String, slot: Int) {
+        startUserModelNamesRead()
+        _connectionState.value = MidiConnectionState.Connected(deviceName = deviceName, activeSlot = slot)
+    }
+
+    /** Reads user IR/SnapTone names, then starts the preset-name scan. Full sync and saves wait for it. */
+    internal fun startUserModelNamesRead(): Job {
+        userModelNamesJob?.cancel()
+        return coroutineScope.launch(ioDispatcher) {
+            readUserModelNames()
+            startPresetNamesScan()
+        }.also { userModelNamesJob = it }
+    }
+
+    internal suspend fun readUserModelNames() {
+        val buffer = java.util.concurrent.ConcurrentHashMap<Int, String>()
+        userModelReadBuffer = buffer
+        var consecutiveTimeouts = 0
+        try {
+            for (kind in UserModelKind.entries) {
+                for (index in 0 until kind.slotCount) {
+                    // A pedal that ignores these records would otherwise hold up sync and saves for 9 s.
+                    if (consecutiveTimeouts >= 3) return
+                    val deferred = CompletableDeferred<Unit>()
+                    awaitedUserModel = kind to index
+                    userModelNameDeferred = deferred
+                    val req = SysExCodec.buildUserModelNameRequest(kind, index, userModelNameRequestTail)
+                    if (rawSender != null) rawSender.invoke(req) else sendBytesDirect(req)
+                    val answered = withTimeoutOrNull(300L) { deferred.await() } != null
+                    consecutiveTimeouts = if (answered) 0 else consecutiveTimeouts + 1
+                    DebugLog.d("ValetonUserModels") {
+                        "$kind[$index] = ${if (answered) buffer[kind.effectId(index)] else "<no response>"}"
+                    }
+                }
+            }
+        } finally {
+            if (userModelReadBuffer === buffer) userModelReadBuffer = null
+            if (buffer.isNotEmpty()) _userModelNames.update { it + buffer }
+            awaitedUserModel = null
+            userModelNameDeferred = null
+        }
+    }
+
     override fun startPresetNamesScan() {
         if (confirmedSlotIndices.size == 256) {
             _namesSyncProgress.value = 256
@@ -936,6 +1000,7 @@ class AndroidMidiDriver internal constructor(
         _namesSyncProgress.value = 0
         pausePresetNamesScan()
         fullSyncJob = coroutineScope.launch(ioDispatcher) {
+            userModelNamesJob?.join()
             val syncedPresets = mutableMapOf<Int, GP200Preset>()
             try {
                 for (slot in 0..255) {
@@ -1013,6 +1078,8 @@ class AndroidMidiDriver internal constructor(
     }
 
     override fun disconnect() {
+        userModelNamesJob?.cancel()
+        userModelNamesJob = null
         confirmedPresets.clear()
         pendingEffectBlocks.clear()
         pendingPresetSettings.set(false)

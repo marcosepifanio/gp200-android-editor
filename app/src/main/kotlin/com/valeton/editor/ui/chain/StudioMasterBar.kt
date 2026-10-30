@@ -91,7 +91,7 @@ fun StudioMasterBar(
 }
 
 @Composable
-private fun MasterVolumeControl(
+internal fun MasterVolumeControl(
     volume: Int,
     onVolumeChange: (Int) -> Unit
 ) {

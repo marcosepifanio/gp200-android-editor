@@ -10,6 +10,9 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.CompositionLocalProvider
+import com.valeton.editor.repository.UserModelNamesRepository
+import com.valeton.editor.ui.components.LocalUserModelNames
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
@@ -82,8 +85,9 @@ class MainActivity : ComponentActivity() {
 
         val namesRepository = PresetNamesRepository(applicationContext.filesDir)
         val libraryRepository = PresetLibraryRepository(applicationContext.filesDir)
+        val userModelNamesRepository = UserModelNamesRepository(applicationContext.filesDir)
         midiDriver = AndroidMidiDriver(applicationContext, lifecycleScope)
-        presetViewModel = PresetViewModel(midiDriver, namesRepository, libraryRepository)
+        presetViewModel = PresetViewModel(midiDriver, namesRepository, libraryRepository, userModelNamesRepository)
         connectionViewModel = ConnectionViewModel(midiDriver)
 
         // Seed with initial default preset only if no cached preset was loaded
@@ -92,6 +96,8 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val userModelNames = presetViewModel.uiState.collectAsStateWithLifecycle().value.userModelNames
+            CompositionLocalProvider(LocalUserModelNames provides userModelNames) {
             GP200Theme {
                 val connectionState by connectionViewModel.connectionState.collectAsStateWithLifecycle()
                 val uiState by presetViewModel.uiState.collectAsStateWithLifecycle()
@@ -245,6 +251,9 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onSaveClick = {
                                         presetViewModel.saveToDevice()
+                                    },
+                                    onSaveLongClick = {
+                                        showMetadataDialog = true
                                     },
                                     onImportClick = {
                                         openDocumentLauncher.launch(arrayOf("*/*"))
@@ -457,16 +466,17 @@ class MainActivity : ComponentActivity() {
 
                     PatchMetadataDialog(
                         isOpen = showMetadataDialog && !uiState.isPerformingFullSync && !uiState.isSaving,
+                        connected = isConnected,
                         currentName = currentPreset?.patchName ?: "",
                         currentAuthor = currentPreset?.author ?: "Valeton",
                         currentVolume = currentPreset?.patchVolume ?: 50,
-                        currentPan = currentPreset?.patchPan ?: 0,
+                        currentSlot = uiState.currentSlotNumber,
+                        presetNames = uiState.presetNames,
                         onDismiss = { showMetadataDialog = false },
-                        onSaveLocal = { newName, newAuthor, newVolume, newPan ->
+                        onApplyLocal = { newName, newAuthor, newVolume ->
                             presetViewModel.renamePatch(newName)
                             presetViewModel.updatePatchAuthor(newAuthor)
                             presetViewModel.updatePatchVolume(newVolume)
-                            presetViewModel.updatePatchPan(newPan)
                             showMetadataDialog = false
                             Toast.makeText(
                                 this@MainActivity,
@@ -474,12 +484,8 @@ class MainActivity : ComponentActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
                         },
-                        onSaveToDevice = { newName, newAuthor, newVolume, newPan ->
-                            presetViewModel.renamePatch(newName)
-                            presetViewModel.updatePatchAuthor(newAuthor)
-                            presetViewModel.updatePatchVolume(newVolume)
-                            presetViewModel.updatePatchPan(newPan)
-                            presetViewModel.saveToDevice()
+                        onSaveToDevice = { targetSlot, newName, newAuthor, newVolume ->
+                            presetViewModel.saveAs(targetSlot, newName, newAuthor, newVolume)
                             showMetadataDialog = false
                         }
                     )
@@ -526,6 +532,7 @@ class MainActivity : ComponentActivity() {
                 if (!showWelcomeScreen) {
                     SaveInProgressOverlay(visible = uiState.isSaving)
                 }
+            }
             }
         }
     }

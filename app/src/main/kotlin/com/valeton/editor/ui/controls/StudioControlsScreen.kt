@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.core.model.ModuleType
+import com.valeton.editor.ui.components.LocalUserModelNames
 import com.valeton.editor.ui.theme.StudioPalette
 
 @Composable
@@ -33,6 +34,7 @@ fun StudioControlsScreen(
     onReload: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val userNames = LocalUserModelNames.current
     Column(
         modifier.fillMaxSize().background(StudioPalette.Case).verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -126,13 +128,13 @@ fun StudioControlsScreen(
                             }
                             MappingSelect(
                                 label = "Destino",
-                                value = ControlMappingOptions.knobTargetLabel(preset, draftBlock),
-                                options = ControlMappingOptions.knobTargets(preset),
+                                value = ControlMappingOptions.knobTargetLabel(preset, draftBlock, userNames),
+                                options = ControlMappingOptions.knobTargets(preset, userNames),
                                 enabled = !busy,
                                 showLabel = false,
                                 compact = true,
                                 modifier = Modifier.weight(1.05f),
-                                accessibilityLabel = "Knob ${index + 1}, destino: ${ControlMappingOptions.knobTargetLabel(preset, draftBlock)}",
+                                accessibilityLabel = "Knob ${index + 1}, destino: ${ControlMappingOptions.knobTargetLabel(preset, draftBlock, userNames)}",
                                 onSelect = { block ->
                                     draftBlock = block
                                     if (block in listOf(11, 12, 255)) onQuickKnobChange(index, block, 255)
@@ -195,7 +197,7 @@ fun StudioControlsScreen(
                     row.forEach { blockIndex ->
                         val bit = 1L shl blockIndex
                         val checked = controls.ctrls[selectedCtrlIndex].targetMask and bit != 0L
-                        val fullLabel = ControlMappingOptions.effectLabel(preset, blockIndex)
+                        val fullLabel = ControlMappingOptions.effectLabel(preset, blockIndex, userNames)
                         val effectName = fullLabel.substringAfter(" · ", fullLabel)
                         Surface(
                             modifier = Modifier

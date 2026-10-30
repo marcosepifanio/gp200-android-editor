@@ -2,6 +2,7 @@ package com.valeton.editor.ui.manage
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -15,26 +16,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.valeton.editor.ui.chain.StudioMasterBar
+import com.valeton.editor.core.codec.SysExCodec
+import com.valeton.editor.ui.chain.MasterVolumeControl
 import com.valeton.editor.ui.theme.StudioPalette
+
+/** Confirmation shown before saving over another slot; every slot always holds a preset. */
+fun overwriteConfirmationText(targetSlot: Int, targetName: String?): String {
+    val label = SysExCodec.slotToLabel(targetSlot)
+    val name = targetName?.trim().orEmpty()
+    return if (name.isEmpty()) "O preset do slot $label será substituído. Continuar?"
+    else "O preset \"$name\" no slot $label será substituído. Continuar?"
+}
 
 @Composable
 fun PatchMetadataDialog(
     isOpen: Boolean,
+    connected: Boolean,
     currentName: String,
     currentAuthor: String = "Valeton",
     currentVolume: Int = 50,
-    currentPan: Int = 0,
+    currentSlot: Int,
+    presetNames: List<String>,
     onDismiss: () -> Unit,
-    onSaveLocal: (name: String, author: String, volume: Int, pan: Int) -> Unit,
-    onSaveToDevice: (name: String, author: String, volume: Int, pan: Int) -> Unit
+    onApplyLocal: (name: String, author: String, volume: Int) -> Unit,
+    onSaveToDevice: (targetSlot: Int, name: String, author: String, volume: Int) -> Unit
 ) {
     if (!isOpen) return
 
     var tempName by remember(currentName) { mutableStateOf(currentName) }
     var tempAuthor by remember(currentAuthor) { mutableStateOf(currentAuthor) }
     var tempVolume by remember(currentVolume) { mutableStateOf(currentVolume) }
-    var tempPan by remember(currentPan) { mutableStateOf(currentPan) }
+    var targetSlot by remember(currentSlot) { mutableStateOf(currentSlot) }
+    var showSlotPicker by remember { mutableStateOf(false) }
+    var confirmOverwrite by remember { mutableStateOf(false) }
+    val saveToDevice = {
+        onSaveToDevice(targetSlot, tempName, tempAuthor, tempVolume)
+        onDismiss()
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -90,13 +108,42 @@ fun PatchMetadataDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Master Output Section
-                StudioMasterBar(
+                MasterVolumeControl(
                     volume = tempVolume,
-                    pan = tempPan,
-                    onVolumeChange = { tempVolume = it },
-                    onPanChange = { tempPan = it }
+                    onVolumeChange = { tempVolume = it }
                 )
+
+                // Patch location: target slot for "save to pedal"
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Local do patch", color = StudioPalette.TextMuted, fontSize = 12.sp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(StudioPalette.Surface)
+                            .border(1.dp, StudioPalette.Border, RoundedCornerShape(6.dp))
+                            .clickable { showSlotPicker = true }
+                            .padding(horizontal = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = SysExCodec.slotToLabel(targetSlot),
+                            color = StudioPalette.Accent,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Text(
+                            text = if (targetSlot == currentSlot) "Slot atual" else presetNames.getOrNull(targetSlot).orEmpty(),
+                            color = StudioPalette.TextMuted,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            maxLines = 1
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -105,9 +152,9 @@ fun PatchMetadataDialog(
                     // 1. Primary: Save to Pedal Flash
                     Button(
                         onClick = {
-                            onSaveToDevice(tempName, tempAuthor, tempVolume, tempPan)
-                            onDismiss()
+                            if (targetSlot == currentSlot) saveToDevice() else confirmOverwrite = true
                         },
+                        enabled = connected,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = StudioPalette.Accent,
                             contentColor = Color.Black
@@ -143,7 +190,7 @@ fun PatchMetadataDialog(
 
                         Button(
                             onClick = {
-                                onSaveLocal(tempName, tempAuthor, tempVolume, tempPan)
+                                onApplyLocal(tempName, tempAuthor, tempVolume)
                                 onDismiss()
                             },
                             colors = ButtonDefaults.buttonColors(
@@ -161,5 +208,34 @@ fun PatchMetadataDialog(
                 }
             }
         }
+    }
+
+    if (showSlotPicker) {
+        SlotPickerModal(
+            currentSlot = targetSlot,
+            presetNames = presetNames,
+            onSelectSlot = {
+                targetSlot = it
+                showSlotPicker = false
+            },
+            onDismiss = { showSlotPicker = false }
+        )
+    }
+
+    if (confirmOverwrite) {
+        AlertDialog(
+            onDismissRequest = { confirmOverwrite = false },
+            title = { Text("Substituir preset?") },
+            text = { Text(overwriteConfirmationText(targetSlot, presetNames.getOrNull(targetSlot))) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmOverwrite = false
+                    saveToDevice()
+                }) { Text("Substituir") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmOverwrite = false }) { Text("Cancelar") }
+            }
+        )
     }
 }

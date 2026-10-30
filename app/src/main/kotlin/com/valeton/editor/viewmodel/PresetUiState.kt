@@ -30,6 +30,8 @@ data class PresetUiState(
     val isSyncingCurrentPreset: Boolean = false,
     val isPerformingFullSync: Boolean = false,
     val fullSyncProgress: FullSyncProgress? = null,
-    val cachedLibrary: Map<Int, GP200Preset> = emptyMap()
+    val cachedLibrary: Map<Int, GP200Preset> = emptyMap(),
+    /** User IR/SnapTone names from the pedal, keyed by effectId; never part of the preset. */
+    val userModelNames: Map<Int, String> = emptyMap()
 )
 

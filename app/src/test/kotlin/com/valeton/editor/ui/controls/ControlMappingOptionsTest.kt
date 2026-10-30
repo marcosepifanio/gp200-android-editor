@@ -31,4 +31,11 @@ class ControlMappingOptionsTest {
         assertTrue(ControlMappingOptions.ctrlLabel(preset, ctrl).startsWith("Vários efeitos"))
         assertEquals(2, ctrl.effectBlocks.size)
     }
+
+    @Test
+    fun `effect label uses the pedal name for a user IR`() {
+        val preset = GP200Preset(patchName = "P", effects = listOf(EffectSlot(slotIndex = 5, effectId = 168820736, enabled = true)))
+        assertEquals("CAB · ir1", ControlMappingOptions.effectLabel(preset, 5, mapOf(168820736 to "ir1")))
+        assertEquals("CAB · ir1", ControlMappingOptions.knobTargetLabel(preset, 5, mapOf(168820736 to "ir1")))
+    }
 }

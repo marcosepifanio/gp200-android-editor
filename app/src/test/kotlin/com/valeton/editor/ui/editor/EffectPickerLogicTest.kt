@@ -170,4 +170,21 @@ class EffectPickerLogicTest {
         assertEquals(-80f, EffectPickerLogic.scrollDeltaToCenterItem(10, 20, 0, 200))
         assertEquals(70f, EffectPickerLogic.scrollDeltaToCenterItem(160, 20, 0, 200))
     }
+
+    @Test
+    fun `search matches user IR names from the pedal`() {
+        val cabEffects = EffectCatalog.getEffectsByModule(ModuleType.CAB)
+        val userNames = mapOf(168820736 to "ir1 Qzx", 168820737 to "Celestion")
+        val results = EffectPickerLogic.filterEffects(cabEffects, query = "qzx", userNames = userNames)
+        assertEquals(listOf(168820736), results.map { it.effectId })
+        val pills = EffectPickerLogic.buildCategoryCounts(cabEffects, listOf("User IR"), query = "qzx", userNames = userNames)
+        assertEquals(1, pills.first().count)
+    }
+
+    @Test
+    fun `user model subtitle shows catalog name and slot number`() {
+        assertEquals("User IR 1", EffectPickerLogic.userModelSubtitle(EffectCatalog.getEffectById(168820736)!!))
+        assertEquals("SnapTone 1", EffectPickerLogic.userModelSubtitle(EffectCatalog.getEffectById(251658245)!!))
+        assertEquals(null, EffectPickerLogic.userModelSubtitle(EffectCatalog.getEffectsByModule(ModuleType.CAB).first { it.category != "User IR" }))
+    }
 }
