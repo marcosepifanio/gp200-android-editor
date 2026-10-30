@@ -374,6 +374,7 @@ class MainActivity : ComponentActivity() {
                                                 onMoveSlot = { fromIndex, toIndex ->
                                                     presetViewModel.reorderSlots(fromIndex, toIndex)
                                                 },
+                                                reorderEnabled = !uiState.isSaving && !uiState.isImporting && !uiState.isPerformingFullSync,
                                                 onVolumeChange = { volume ->
                                                     presetViewModel.updatePatchVolume(volume)
                                                 },
