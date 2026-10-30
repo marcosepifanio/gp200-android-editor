@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.time.LocalDate
 
 class PresetLibraryRepositoryTest {
 
@@ -214,5 +215,27 @@ class PresetLibraryRepositoryTest {
         assertNull(repository.loadFullLibrary()!!.getValue(0).controlMappings)
     }
 
-}
+    @Test
+    fun `last full sync date round-trips and is null for caches without it`() {
+        repository.saveFullLibrary(mapOf(0 to createDummyPreset("A")))
+        assertNull(repository.lastFullSyncDate())
 
+        repository.markFullSync(LocalDate.of(2026, 10, 30))
+        assertEquals(LocalDate.of(2026, 10, 30), PresetLibraryRepository(tempDir).lastFullSyncDate())
+        assertEquals("A", repository.loadFullLibrary()!!.getValue(0).patchName)
+    }
+
+    @Test
+    fun `clearCache also forgets the last full sync date`() {
+        repository.saveFullLibrary(mapOf(0 to createDummyPreset("A")))
+        repository.markFullSync(LocalDate.of(2026, 10, 30))
+        repository.clearCache()
+        assertNull(repository.lastFullSyncDate())
+    }
+
+    @Test
+    fun `corrupt last sync file is treated as never synced`() {
+        File(tempDir, "library_last_sync.txt").writeText("ontem")
+        assertNull(repository.lastFullSyncDate())
+    }
+}

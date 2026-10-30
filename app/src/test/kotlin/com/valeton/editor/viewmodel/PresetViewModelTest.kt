@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.time.LocalDate
 import java.io.File
 
 class FakeMidiManager : MidiConnectionManager {
@@ -804,6 +805,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(fakeMidi, libraryRepository = repository)
 
@@ -873,6 +875,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(fakeMidi, libraryRepository = repository)
 
@@ -895,6 +898,7 @@ class PresetViewModelTest {
         val fakeMidi = FakeMidiManager()
         val repository = PresetLibraryRepository(tempDir)
         repository.saveFullLibrary(createDummyLibrary())
+        repository.markFullSync(LocalDate.now())
         assertTrue(repository.isLibraryCached())
 
         val viewModel = PresetViewModel(
@@ -918,6 +922,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             fakeMidi,
@@ -1017,6 +1022,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(fakeMidi, libraryRepository = repository)
 
@@ -1035,6 +1041,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(fakeMidi, libraryRepository = repository)
         viewModel.forceFullLibraryResync()
@@ -1059,6 +1066,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(fakeMidi, libraryRepository = repository)
 
@@ -1074,6 +1082,7 @@ class PresetViewModelTest {
         val repository = PresetLibraryRepository(tempDir)
         val dummyLibrary = createDummyLibrary()
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             fakeMidi,
@@ -1105,6 +1114,7 @@ class PresetViewModelTest {
             createInitialPreset().copy(patchName = "Preset %03d".format(idx))
         }
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             midiManager = fakeMidi,
@@ -1160,6 +1170,7 @@ class PresetViewModelTest {
             createInitialPreset().copy(patchName = "Preset %03d".format(idx))
         }
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             midiManager = fakeMidi,
@@ -1201,6 +1212,7 @@ class PresetViewModelTest {
             createInitialPreset().copy(patchName = "Preset %03d".format(idx))
         }
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             midiManager = fakeMidi,
@@ -1232,6 +1244,7 @@ class PresetViewModelTest {
             createInitialPreset().copy(patchName = "Preset %03d".format(idx))
         }
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             midiManager = fakeMidi,
@@ -1264,6 +1277,7 @@ class PresetViewModelTest {
             createInitialPreset().copy(patchName = "Preset %03d".format(idx))
         }
         repository.saveFullLibrary(dummyLibrary)
+        repository.markFullSync(LocalDate.now())
 
         val viewModel = PresetViewModel(
             midiManager = fakeMidi,
@@ -1755,6 +1769,7 @@ class PresetViewModelTest {
     fun `import immediately updates confirmed list name while save remains pending`() = kotlinx.coroutines.test.runTest {
         val repository = PresetLibraryRepository(tempDir)
         repository.saveFullLibrary(createDummyLibrary())
+        repository.markFullSync(LocalDate.now())
         val response = kotlinx.coroutines.CompletableDeferred<GP200Preset?>()
         val midi = FakeMidiManager().apply { saveHandler = { _, _ -> response.await() } }
         val vm = PresetViewModel(midi, libraryRepository = repository, coroutineScope = backgroundScope)
@@ -1965,7 +1980,113 @@ class PresetViewModelTest {
         assertTrue(midi.presetChangesSent.isEmpty())
         assertTrue(midi.saves.isEmpty())
     }
+
+    private fun dailySyncViewModel(midi: FakeMidiManager, repository: PresetLibraryRepository, day: () -> LocalDate) =
+        PresetViewModel(
+            midi,
+            libraryRepository = repository,
+            coroutineScope = CoroutineScope(Dispatchers.Unconfined),
+            today = day
+        )
+
+    @Test
+    fun `first connection of a new day syncs again but keeps the cache visible`() {
+        val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        repository.markFullSync(LocalDate.of(2026, 10, 29))
+        val vm = dailySyncViewModel(midi, repository) { LocalDate.of(2026, 10, 30) }
+
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+
+        assertTrue(midi.fullSyncStarted)
+        assertTrue(vm.uiState.value.isPerformingFullSync)
+        assertEquals(256, vm.uiState.value.cachedLibrary.size)
+    }
+
+    @Test
+    fun `connection on a day already synced does not sync again`() {
+        val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        repository.markFullSync(LocalDate.of(2026, 10, 30))
+        val vm = dailySyncViewModel(midi, repository) { LocalDate.of(2026, 10, 30) }
+
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+
+        assertFalse(midi.fullSyncStarted)
+        assertFalse(vm.uiState.value.isPerformingFullSync)
+    }
+
+    @Test
+    fun `full cache from before the daily rule syncs on the first connection`() {
+        val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        dailySyncViewModel(midi, repository) { LocalDate.of(2026, 10, 30) }
+
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+
+        assertTrue(midi.fullSyncStarted)
+    }
+
+    @Test
+    fun `complete sync records the day so the next connection that day does not sync`() {
+        val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        val vm = dailySyncViewModel(midi, repository) { LocalDate.of(2026, 10, 30) }
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+        assertTrue(midi.fullSyncStarted)
+
+        midi._pedalEvents.tryEmit(PedalEvent.FullLibrarySynced(createDummyLibrary()))
+        assertFalse(vm.uiState.value.isPerformingFullSync)
+        assertEquals(LocalDate.of(2026, 10, 30), repository.lastFullSyncDate())
+
+        midi.fullSyncStarted = false
+        midi._connectionState.value = MidiConnectionState.Disconnected
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+        assertFalse(midi.fullSyncStarted)
+    }
+
+    @Test
+    fun `partial daily sync keeps cached slots and does not record the day`() {
+        val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        repository.markFullSync(LocalDate.of(2026, 10, 29))
+        val vm = dailySyncViewModel(midi, repository) { LocalDate.of(2026, 10, 30) }
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+
+        val refreshed = createDummyLibrary().minus(7).mapValues { (_, p) -> p.copy(author = "Novo") }
+        midi._pedalEvents.tryEmit(PedalEvent.FullLibrarySynced(refreshed))
+
+        val state = vm.uiState.value
+        assertEquals(256, state.cachedLibrary.size)
+        assertEquals("Author 7", state.cachedLibrary[7]?.author)
+        assertEquals("Novo", state.cachedLibrary[8]?.author)
+        assertEquals(LocalDate.of(2026, 10, 29), repository.lastFullSyncDate())
+    }
+
+    @Test
+    fun `failed saveAs puts the target slot name back`() {
+        val midi = FakeMidiManager().apply { saveHandler = { _, _ -> null } }
+        val vm = saveAsViewModel(midi)
+        val targetName = vm.uiState.value.presetNames[10]
+        vm.saveAs(10, "Novo", "Autor", 70)
+        val state = vm.uiState.value
+        assertEquals(targetName, state.presetNames[10])
+        assertEquals("Novo", state.preset?.patchName, "The edit stays pending in the editor")
+        assertTrue(state.hasUnsavedChanges)
+    }
+
+    @Test
+    fun `saveAs that fails with an exception puts the target slot name back`() {
+        val midi = FakeMidiManager().apply { saveHandler = { _, _ -> throw IllegalStateException("USB") } }
+        val vm = saveAsViewModel(midi)
+        val targetName = vm.uiState.value.presetNames[10]
+        vm.saveAs(10, "Novo", "Autor", 70)
+        assertEquals(targetName, vm.uiState.value.presetNames[10])
+        assertEquals("Falha ao salvar na pedaleira. Suas alterações continuam pendentes.", vm.uiState.value.errorMessage)
+    }
 }
-
-
-

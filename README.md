@@ -51,7 +51,7 @@ O app é um controlador/editor: o processamento de guitarra e a reprodução dos
 1. Compile e instale o aplicativo seguindo as instruções abaixo.
 2. Use um aparelho com **Android 8.0 (API 26) ou superior**, suporte a USB host/OTG e MIDI.
 3. Conecte a pedaleira ligada usando um cabo de dados compatível com o seu aparelho e adaptador OTG, se necessário.
-4. Abra o app, toque em **Conectar Pedaleira** e aguarde a sincronização. Sem um cache completo, o app precisa ler a biblioteca de 256 slots.
+4. Abra o app, toque em **Conectar Pedaleira** e aguarde a sincronização. Sem um cache completo, o app precisa ler a biblioteca de 256 slots; com cache, ele sincroniza de novo na primeira conexão de cada dia.
 5. Abra um bloco na aba **Cadeia** para editar seus parâmetros. Use **Presets** para navegar pelos slots, importar, exportar e compartilhar.
 6. Use **Salvar** para gravar na pedaleira e aguarde a confirmação da leitura de verificação. Durante salvamento, importação e sincronização completa, a edição fica bloqueada.
 

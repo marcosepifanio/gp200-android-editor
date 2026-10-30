@@ -6,6 +6,7 @@ import com.valeton.editor.core.model.GP200Preset
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.time.LocalDate
 import java.util.Base64
 
 class PresetLibraryRepository(
@@ -16,6 +17,26 @@ class PresetLibraryRepository(
 
     private val tempFile: File
         get() = File(storageDir, "library_cache.json.tmp")
+
+    /** Day of the last complete library sync, kept apart so library_cache.json keeps its format. */
+    private val lastSyncFile: File
+        get() = File(storageDir, "library_last_sync.txt")
+
+    @Synchronized
+    fun lastFullSyncDate(): LocalDate? = try {
+        if (lastSyncFile.exists()) LocalDate.parse(lastSyncFile.readText(Charsets.UTF_8).trim()) else null
+    } catch (_: Exception) {
+        null
+    }
+
+    @Synchronized
+    fun markFullSync(date: LocalDate) {
+        try {
+            if (!storageDir.exists()) storageDir.mkdirs()
+            lastSyncFile.writeText(date.toString(), Charsets.UTF_8)
+        } catch (_: Exception) {
+        }
+    }
 
     @Synchronized
     fun isLibraryCached(): Boolean {
@@ -179,6 +200,9 @@ class PresetLibraryRepository(
             }
             if (tempFile.exists()) {
                 tempFile.delete()
+            }
+            if (lastSyncFile.exists()) {
+                lastSyncFile.delete()
             }
         } catch (_: Exception) {
         }

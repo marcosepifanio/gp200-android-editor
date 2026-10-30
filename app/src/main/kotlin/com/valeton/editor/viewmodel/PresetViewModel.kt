@@ -28,13 +28,15 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 class PresetViewModel(
     private val midiManager: MidiConnectionManager,
     private val repository: PresetNamesRepository? = null,
     private val libraryRepository: PresetLibraryRepository? = null,
     private val userModelNamesRepository: UserModelNamesRepository? = null,
-    coroutineScope: CoroutineScope? = null
+    coroutineScope: CoroutineScope? = null,
+    private val today: () -> LocalDate = { LocalDate.now() }
 ) : ViewModel() {
 
     private val scope: CoroutineScope = coroutineScope ?: viewModelScope
@@ -46,6 +48,8 @@ class PresetViewModel(
     private var lastSavedTimestamp: Long = 0L
     /** Name a slot had before its first unsaved local rename, so "save as" can restore the source. */
     private var nameBeforeLocalRename: Pair<Int, String>? = null
+    /** Day of the last complete library sync; the first connection of a new day syncs again. */
+    private var lastFullSyncDate: LocalDate? = libraryRepository?.lastFullSyncDate()
     private val _uiState = MutableStateFlow(PresetUiState())
     val uiState: StateFlow<PresetUiState> = _uiState.asStateFlow()
 
@@ -158,13 +162,14 @@ class PresetViewModel(
         }
     }
 
+    /** Syncs on connection when the cache is incomplete or was not refreshed today; the cache stays visible meanwhile. */
     private fun checkAndTriggerFullSync() {
         if (libraryRepository == null || _uiState.value.isImporting || _uiState.value.isSaving || _uiState.value.hasUnsavedChanges) return
+        if (_uiState.value.isPerformingFullSync) return
         val isFull = _uiState.value.cachedLibrary.size == 256 && _uiState.value.cachedLibrary.values.all { it.effects.isNotEmpty() }
-        if (!isFull && !_uiState.value.isPerformingFullSync) {
-            _uiState.update { it.copy(isPerformingFullSync = true) }
-            midiManager.startFullLibrarySync()
-        }
+        if (isFull && lastFullSyncDate == today()) return
+        _uiState.update { it.copy(isPerformingFullSync = true) }
+        midiManager.startFullLibrarySync()
     }
 
     fun handlePedalEvent(event: PedalEvent) {
@@ -247,12 +252,14 @@ class PresetViewModel(
             is PedalEvent.FullLibrarySynced -> {
                 val validPresets = event.presets.filter { (slot, preset) -> slot in 0..255 && preset.effects.isNotEmpty() }
                 val missingCount = 256 - validPresets.size
+                // A daily refresh starts from a full cache: slots that failed to read keep their cached copy.
+                val library = _uiState.value.cachedLibrary + validPresets
                 _uiState.update { current ->
                     val names = (0..255).map { idx ->
                         validPresets[idx]?.patchName ?: current.presetNames.getOrElse(idx) { "Patch ${SysExCodec.slotToLabel(idx)}" }
                     }
                     current.copy(
-                        cachedLibrary = validPresets,
+                        cachedLibrary = library,
                         presetNames = names,
                         confirmedSlots = validPresets.keys,
                         isPerformingFullSync = false,
@@ -262,7 +269,12 @@ class PresetViewModel(
                             "Não foi possível ler $missingCount patches. Reconecte a pedaleira ou sincronize novamente."
                     )
                 }
-                scope.launch(ioDispatcher) { libraryRepository?.saveFullLibrary(validPresets) }
+                scope.launch(ioDispatcher) { libraryRepository?.saveFullLibrary(library) }
+                if (missingCount == 0) {
+                    val syncedOn = today()
+                    lastFullSyncDate = syncedOn
+                    scope.launch(ioDispatcher) { libraryRepository?.markFullSync(syncedOn) }
+                }
             }
             is PedalEvent.DrumSyncChanged -> {
                 DebugLog.d("ValetonDrum") { "DrumSyncChanged received: enabled=${event.enabled}" }
@@ -535,6 +547,7 @@ class PresetViewModel(
 
     fun forceFullLibraryResync() {
         if (_uiState.value.isSaving || _uiState.value.isImporting || _uiState.value.isPerformingFullSync) return
+        lastFullSyncDate = null
         _uiState.update {
             it.copy(
                 isPerformingFullSync = true,
@@ -741,6 +754,8 @@ class PresetViewModel(
         }
         val sourceName = _uiState.value.cachedLibrary[source]?.patchName
             ?: nameBeforeLocalRename?.takeIf { it.first == source }?.second
+        val previousTargetName = _uiState.value.cachedLibrary[target]?.patchName
+            ?: _uiState.value.presetNames.getOrNull(target)
         nameBeforeLocalRename = null
         val preset = edited.copy(patchName = name.take(16), author = author.take(16), patchVolume = volume)
         _uiState.update {
@@ -771,7 +786,16 @@ class PresetViewModel(
             } finally {
                 _uiState.update { it.copy(isSaving = false) }
             }
-            saveToDevice(target, forceReplay = true)
+            // Until the pedal confirms, the target slot still holds its previous patch.
+            save(target, forceReplay = true) {
+                if (previousTargetName != null) {
+                    _uiState.update { state ->
+                        state.copy(presetNames = state.presetNames.mapIndexed { index, current ->
+                            if (index == target) previousTargetName else current
+                        })
+                    }
+                }
+            }
         }
     }
 
@@ -868,11 +892,16 @@ class PresetViewModel(
         renamePatch(name)
     }
 
-    fun saveToDevice(slot: Int = _uiState.value.currentSlotNumber, forceReplay: Boolean = false) {
+    fun saveToDevice(slot: Int = _uiState.value.currentSlotNumber, forceReplay: Boolean = false) =
+        save(slot, forceReplay, onUnconfirmed = null)
+
+    /** [onUnconfirmed] runs when the pedal does not confirm the save, so callers can undo optimistic UI. */
+    private fun save(slot: Int, forceReplay: Boolean, onUnconfirmed: (() -> Unit)?) {
         if (_uiState.value.isPerformingFullSync || _uiState.value.isSaving || _uiState.value.isImporting) return
         val currentPreset = _uiState.value.preset ?: return
         if (midiManager.connectionState.value !is MidiConnectionState.Connected) {
             _uiState.update { it.copy(errorMessage = "Conecte a pedaleira antes de salvar.") }
+            onUnconfirmed?.invoke()
             return
         }
         val targetSlot = slot.coerceIn(0, 255)
@@ -901,6 +930,7 @@ class PresetViewModel(
                         hasUnsavedChanges = true,
                         errorMessage = "Não foi possível confirmar o salvamento$detail. Suas alterações continuam pendentes."
                     ) }
+                    onUnconfirmed?.invoke()
                     return@launch
                 }
                 _uiState.update { current ->
@@ -929,6 +959,7 @@ class PresetViewModel(
                     isSaving = false, hasUnsavedChanges = true,
                     errorMessage = "Falha ao salvar na pedaleira. Suas alterações continuam pendentes."
                 ) }
+                onUnconfirmed?.invoke()
             }
         }
     }

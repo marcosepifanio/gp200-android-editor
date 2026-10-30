@@ -46,7 +46,7 @@ O fluxo atual em `MainActivity` usa `StudioChainScreen`, `StudioPatchManagerScre
 
 ### Conexão e sincronização
 
-`AndroidMidiDriver` usa `android.media.midi`, escaneia dispositivos e identifica nomes/produtos que contenham GP-200, GP200 ou Valeton. O view model inicia a sincronização da biblioteca quando não encontra um cache completo. A biblioteca da pedaleira contém 256 slots. Com um cache completo, os dados locais podem ser exibidos antes de qualquer nova leitura do hardware; não trate o cache como estado atual da pedaleira quando houver alterações locais ou uma sincronização pendente.
+`AndroidMidiDriver` usa `android.media.midi`, escaneia dispositivos e identifica nomes/produtos que contenham GP-200, GP200 ou Valeton. O view model inicia a sincronização da biblioteca ao conectar quando não encontra um cache completo ou quando a última sincronização completa não foi feita no dia atual (data em `library_last_sync.txt`, gravada só quando os 256 slots são lidos). Na sincronização diária o cache continua visível, e slots que falharem na leitura mantêm a cópia em cache. Com alterações locais pendentes, salvamento ou importação em andamento, a sincronização fica para a próxima conexão. A biblioteca da pedaleira contém 256 slots. Com um cache completo, os dados locais podem ser exibidos antes de qualquer nova leitura do hardware; não trate o cache como estado atual da pedaleira quando houver alterações locais ou uma sincronização pendente.
 
 O código de detecção não garante compatibilidade física com todas as variantes da família. O mantenedor relatou testes em hardware com a GP-200 LT; valide fisicamente cada variante antes de afirmar suporte equivalente.
 
