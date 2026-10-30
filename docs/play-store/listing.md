@@ -92,6 +92,12 @@ Link para a política de privacidade na tela Sobre.
 Nomes dos IRs e SnapTones da pedaleira, salvar em outro slot e sincronização automática na primeira conexão do dia.
 ```
 
+- **Notas da versão (pt-BR)** para 1.0.6 (15):
+
+```
+O botão Ressincronizar fica desabilitado no modo offline, sem travar na tela de sincronização.
+```
+
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.
 
 ## Pendências antes da produção
