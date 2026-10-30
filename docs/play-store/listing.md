@@ -86,6 +86,12 @@ Primeira versão de testes na Play Store.
 Link para a política de privacidade na tela Sobre.
 ```
 
+- **Notas da versão (pt-BR)** para 1.0.5 (14):
+
+```
+Nomes dos IRs e SnapTones da pedaleira, salvar em outro slot e sincronização automática na primeira conexão do dia.
+```
+
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.
 
 ## Pendências antes da produção

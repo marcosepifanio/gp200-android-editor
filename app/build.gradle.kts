@@ -20,8 +20,8 @@ android {
         applicationId = "io.github.marcosepifanio.gp200editor"
         minSdk = 26
         targetSdk = 36
-        versionCode = 13
-        versionName = "1.0.4"
+        versionCode = 14
+        versionName = "1.0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
