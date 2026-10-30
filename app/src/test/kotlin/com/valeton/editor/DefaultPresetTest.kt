@@ -9,6 +9,8 @@ class DefaultPresetTest {
         val preset = createDefaultPreset()
 
         assertEquals((0..10).toList(), preset.effects.map { it.slotIndex })
+        // Reordering moves routingOrder, so it must match the order the chain shows.
+        assertEquals(preset.effects.map { it.slotIndex }, preset.routingOrder)
         assertTrue(preset.effects.all { !it.enabled })
         assertEquals(
             listOf(16777216, 83886087, 50331712, 134217850, 27, 167772220,
