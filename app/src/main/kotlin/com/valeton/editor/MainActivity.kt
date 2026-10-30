@@ -60,6 +60,9 @@ import com.valeton.editor.usb.MidiConnectionState
 import com.valeton.editor.viewmodel.ConnectionViewModel
 import com.valeton.editor.viewmodel.PresetViewModel
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -112,19 +115,26 @@ class MainActivity : ComponentActivity() {
 
                 val handlePrstUri: (Uri) -> Unit = remember {
                     { uri ->
-                        try {
-                            contentResolver.openInputStream(uri)?.use { inputStream ->
-                                val bytes = inputStream.readBytes()
-                                val decoder = PRSTDecoder(bytes)
-                                val preset = decoder.decode()
+                        lifecycleScope.launch {
+                            // Bounded read off the main thread: the URI may come from any app.
+                            val result = withContext(Dispatchers.IO) {
+                                runCatching {
+                                    contentResolver.openInputStream(uri)?.use { PRSTDecoder(PRSTDecoder.readFile(it)).decode() }
+                                }
+                            }
+                            val preset = result.getOrNull()
+                            if (preset != null) {
                                 pendingImportPreset = preset
                                 showImportDialog = true
                                 showWelcomeScreen = false
-                            } ?: run {
-                                Toast.makeText(this@MainActivity, "Não foi possível abrir o arquivo", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val message = if (result.exceptionOrNull() is IllegalArgumentException) {
+                                    "Arquivo .prst inválido."
+                                } else {
+                                    "Não foi possível abrir o arquivo."
+                                }
+                                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                             }
-                        } catch (e: Exception) {
-                            Toast.makeText(this@MainActivity, "Erro ao abrir .prst: ${e.message}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
