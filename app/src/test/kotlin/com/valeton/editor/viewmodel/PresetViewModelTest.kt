@@ -917,6 +917,28 @@ class PresetViewModelTest {
     }
 
     @Test
+    fun `forceFullLibraryResync while offline keeps cache and does not start sync`() {
+        val fakeMidi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        repository.markFullSync(LocalDate.now())
+
+        val viewModel = PresetViewModel(
+            fakeMidi,
+            libraryRepository = repository,
+            coroutineScope = CoroutineScope(Dispatchers.Unconfined)
+        )
+
+        viewModel.forceFullLibraryResync()
+
+        assertTrue(repository.isLibraryCached())
+        assertEquals(LocalDate.now(), repository.lastFullSyncDate())
+        assertFalse(viewModel.uiState.value.isPerformingFullSync)
+        assertEquals(256, viewModel.uiState.value.cachedLibrary.size)
+        assertFalse(fakeMidi.fullSyncStarted)
+    }
+
+    @Test
     fun `PresetLoaded updates cachedLibrary and repository`() {
         val fakeMidi = FakeMidiManager()
         val repository = PresetLibraryRepository(tempDir)

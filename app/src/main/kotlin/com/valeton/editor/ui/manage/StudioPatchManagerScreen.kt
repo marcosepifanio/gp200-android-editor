@@ -52,6 +52,7 @@ fun StudioPatchManagerScreen(
     onShareExportSlot: (Int) -> Unit = {},
     onImportClick: (() -> Unit)? = null,
     onResyncAllClick: (() -> Unit)? = null,
+    resyncEnabled: Boolean = true,
     isPerformingFullSync: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -118,6 +119,7 @@ fun StudioPatchManagerScreen(
                 if (onResyncAllClick != null) {
                     OutlinedButton(
                         onClick = { showResyncConfirmDialog = true },
+                        enabled = resyncEnabled && !isPerformingFullSync,
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = StudioPalette.AmberLed)
                     ) {
@@ -453,7 +455,7 @@ fun StudioPatchManagerScreen(
         )
     }
 
-    if (showResyncConfirmDialog && !isPerformingFullSync) {
+    if (showResyncConfirmDialog && resyncEnabled && !isPerformingFullSync) {
         AlertDialog(
             onDismissRequest = { showResyncConfirmDialog = false },
             title = {

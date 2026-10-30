@@ -547,6 +547,8 @@ class PresetViewModel(
 
     fun forceFullLibraryResync() {
         if (_uiState.value.isSaving || _uiState.value.isImporting || _uiState.value.isPerformingFullSync) return
+        // Offline there is no pedal to answer: keep the cache instead of clearing it and waiting forever.
+        if (midiManager.connectionState.value !is MidiConnectionState.Connected) return
         lastFullSyncDate = null
         _uiState.update {
             it.copy(

@@ -430,6 +430,7 @@ class MainActivity : ComponentActivity() {
                                         onResyncAllClick = {
                                             presetViewModel.forceFullLibraryResync()
                                         },
+                                        resyncEnabled = isConnected,
                                         isPerformingFullSync = uiState.isPerformingFullSync
                                     )
                                 }
