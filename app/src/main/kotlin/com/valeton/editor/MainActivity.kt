@@ -34,6 +34,7 @@ import androidx.lifecycle.lifecycleScope
 import com.valeton.editor.core.catalog.DrumCatalog
 import com.valeton.editor.core.codec.PRSTDecoder
 import com.valeton.editor.core.codec.PRSTEncoder
+import com.valeton.editor.core.codec.PresetImportCheck
 import com.valeton.editor.core.codec.SysExCodec
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.repository.PresetLibraryRepository
@@ -50,6 +51,7 @@ import com.valeton.editor.ui.drums.StudioDrumMiniPlayer
 import com.valeton.editor.ui.drums.StudioDrumScreen
 import com.valeton.editor.ui.editor.StudioPedalEditorScreen
 import com.valeton.editor.ui.manage.ImportPatchDialog
+import com.valeton.editor.ui.manage.ImportWarnings
 import com.valeton.editor.ui.manage.PatchMetadataDialog
 import com.valeton.editor.ui.manage.StudioPatchManagerScreen
 import com.valeton.editor.ui.sync.StudioFullSyncScreen
@@ -111,6 +113,7 @@ class MainActivity : ComponentActivity() {
                 var showMetadataDialog by remember { mutableStateOf(false) }
                 var showImportDialog by remember { mutableStateOf(false) }
                 var pendingImportPreset by remember { mutableStateOf<GP200Preset?>(null) }
+                var pendingImportWarnings by remember { mutableStateOf<List<String>>(emptyList()) }
                 var pendingExportBytes by rememberSaveable { mutableStateOf<ByteArray?>(null) }
 
                 val handlePrstUri: (Uri) -> Unit = remember {
@@ -119,12 +122,16 @@ class MainActivity : ComponentActivity() {
                             // Bounded read off the main thread: the URI may come from any app.
                             val result = withContext(Dispatchers.IO) {
                                 runCatching {
-                                    contentResolver.openInputStream(uri)?.use { PRSTDecoder(PRSTDecoder.readFile(it)).decode() }
+                                    contentResolver.openInputStream(uri)?.use {
+                                        // Refuse a broken chain and hold knob values to the catalog before anything reaches the pedal.
+                                        PresetImportCheck.check(PRSTDecoder(PRSTDecoder.readFile(it)).decode())
+                                    }
                                 }
                             }
-                            val preset = result.getOrNull()
-                            if (preset != null) {
-                                pendingImportPreset = preset
+                            val checked = result.getOrNull()
+                            if (checked != null) {
+                                pendingImportPreset = checked.preset
+                                pendingImportWarnings = ImportWarnings.lines(checked)
                                 showImportDialog = true
                                 showWelcomeScreen = false
                             } else {
@@ -514,6 +521,7 @@ class MainActivity : ComponentActivity() {
                         preset = pendingImportPreset,
                         currentSlot = uiState.currentSlotNumber,
                         presetNames = uiState.presetNames,
+                        warnings = pendingImportWarnings,
                         onDismiss = {
                             intent?.data = null
                             showImportDialog = false
