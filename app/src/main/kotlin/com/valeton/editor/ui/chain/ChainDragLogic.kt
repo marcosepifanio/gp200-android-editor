@@ -14,6 +14,16 @@ internal object ChainDragLogic {
         return order.toMutableList().apply { add(toIndex, removeAt(fromIndex)) }
     }
 
+    /**
+     * Keeps the dragged card inside the pedal area: between the top of the first card and the bottom of
+     * the last one when they are on screen, and always inside the viewport.
+     */
+    fun clampTop(top: Float, size: Int, areaStart: Int?, areaEnd: Int?, viewportStart: Int, viewportEnd: Int): Float {
+        val min = maxOf(viewportStart, areaStart ?: viewportStart).toFloat()
+        val max = (minOf(viewportEnd, areaEnd ?: viewportEnd) - size).toFloat()
+        return if (max < min) min else top.coerceIn(min, max)
+    }
+
     /** Scroll step while a dragged card sits within [threshold] of the viewport edge; negative scrolls up. */
     fun edgeScroll(
         itemStart: Float,

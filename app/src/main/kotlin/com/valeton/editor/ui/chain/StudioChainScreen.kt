@@ -265,8 +265,26 @@ private class ChainDragState(private val listState: LazyListState) {
         dragDelta = 0f
     }
 
-    /** Translation that keeps the dragged card under the finger while the list re-lays out around it. */
-    fun draggedOffset(): Float = draggedItem()?.let { initialOffset + dragDelta - it.offset } ?: 0f
+    /**
+     * Translation that keeps the dragged card under the finger while the list re-lays out around it,
+     * held inside the pedal area so it never slides over the header or the output panel.
+     */
+    fun draggedOffset(): Float {
+        val item = draggedItem() ?: return 0f
+        val chain = order ?: return 0f
+        val info = listState.layoutInfo
+        val first = info.visibleItemsInfo.firstOrNull { it.key == chain.first().slotIndex }
+        val last = info.visibleItemsInfo.firstOrNull { it.key == chain.last().slotIndex }
+        val top = ChainDragLogic.clampTop(
+            top = initialOffset + dragDelta,
+            size = item.size,
+            areaStart = first?.offset,
+            areaEnd = last?.let { it.offset + it.size },
+            viewportStart = info.viewportStartOffset,
+            viewportEnd = info.viewportEndOffset
+        )
+        return top - item.offset
+    }
 
     fun dragBy(amount: Float) {
         dragDelta += amount
