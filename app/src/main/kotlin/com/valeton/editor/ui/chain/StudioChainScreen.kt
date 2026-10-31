@@ -7,9 +7,15 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -45,6 +52,8 @@ fun StudioChainScreen(
     onToggleSlot: (Int) -> Unit,
     onOpenSlot: (Int) -> Unit,
     onMoveSlot: (fromIndex: Int, toIndex: Int) -> Unit,
+    onMoveFxLoopSend: (position: Int) -> Unit = {},
+    onMoveFxLoopReturn: (position: Int) -> Unit = {},
     onVolumeChange: (Int) -> Unit = {},
     onPanChange: (Int) -> Unit = {},
     onTempoChange: (Int) -> Unit = {},
@@ -58,6 +67,10 @@ fun StudioChainScreen(
     val currentOnMoveSlot by rememberUpdatedState(onMoveSlot)
     val currentEffects by rememberUpdatedState(preset.effects)
     val chain = drag.order ?: preset.effects
+    val rows = ChainRows.build(chain.size, preset.fxLoopSend, preset.fxLoopReturn)
+    val send = preset.fxLoopSend
+    val ret = preset.fxLoopReturn
+    val positions = GP200Preset.FX_LOOP_POSITIONS
 
     val edgeThreshold = with(LocalDensity.current) { 64.dp.toPx() }
     LaunchedEffect(drag.draggingKey) {
@@ -113,64 +126,87 @@ fun StudioChainScreen(
                 CableLine()
             }
 
-        // 3. Pedal Cards with Interconnecting Cables
-        itemsIndexed(chain, key = { _, slot -> slot.slotIndex }) { index, slot ->
-            val isDragging = drag.draggingKey == slot.slotIndex
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = if (isDragging) {
-                    Modifier
-                        .zIndex(1f)
-                        .graphicsLayer { translationY = drag.draggedOffset() }
-                } else {
-                    Modifier.animateItem()
+        // 3. Pedal Cards and FX loop markers with Interconnecting Cables
+        items(rows, key = { row ->
+            when (row) {
+                is ChainRow.Pedal -> chain[row.index].slotIndex
+                ChainRow.FxSend -> "fx-send"
+                ChainRow.FxReturn -> "fx-return"
+            }
+        }) { row ->
+            val isLast = row == rows.last()
+            when (row) {
+                ChainRow.FxSend -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.animateItem()
+                ) {
+                    FxLoopMarker(
+                        label = "↗ FX SEND",
+                        what = "FX Send",
+                        onMoveUp = (send - 1).takeIf { reorderEnabled && it in positions }?.let { { onMoveFxLoopSend(it) } },
+                        onMoveDown = (send + 1).takeIf { reorderEnabled && it in positions && it <= ret }?.let { { onMoveFxLoopSend(it) } }
+                    )
+                    if (!isLast) CableLine()
                 }
-            ) {
-                // FX Loop SEND Marker if positioned before this slot
-                if (preset.fxLoopSend == index) {
-                    FxLoopMarker(label = "↗ FX SEND")
-                    CableLine()
+                ChainRow.FxReturn -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.animateItem()
+                ) {
+                    FxLoopMarker(
+                        label = "↙ FX RETURN",
+                        what = "FX Return",
+                        onMoveUp = (ret - 1).takeIf { reorderEnabled && it in positions && it >= send }?.let { { onMoveFxLoopReturn(it) } },
+                        onMoveDown = (ret + 1).takeIf { reorderEnabled && it in positions }?.let { { onMoveFxLoopReturn(it) } }
+                    )
+                    if (!isLast) CableLine()
                 }
-
-                StudioPedalCard(
-                    slot = slot,
-                    position = index,
-                    chainLength = chain.size,
-                    onToggle = { onToggleSlot(slot.slotIndex) },
-                    onClick = { onOpenSlot(slot.slotIndex) },
-                    onMoveUp = if (index > 0) { { onMoveSlot(index, index - 1) } } else null,
-                    onMoveDown = if (index < chain.size - 1) { { onMoveSlot(index, index + 1) } } else null,
-                    modifier = if (isDragging) Modifier.border(2.dp, StudioPalette.Accent, RoundedCornerShape(8.dp)) else Modifier,
-                    dragHandle = if (!reorderEnabled) Modifier else Modifier.pointerInput(slot.slotIndex) {
-                        detectDragGestures(
-                            onDragStart = {
-                                drag.start(slot.slotIndex, currentEffects)
-                                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            },
-                            onDrag = { change, amount ->
-                                change.consume()
-                                drag.dragBy(amount.y)
-                            },
-                            onDragEnd = {
-                                drag.finish()?.let { (from, to) ->
-                                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    currentOnMoveSlot(from, to)
-                                }
-                            },
-                            onDragCancel = { drag.finish() }
+                is ChainRow.Pedal -> {
+                    val index = row.index
+                    val slot = chain[index]
+                    val isDragging = drag.draggingKey == slot.slotIndex
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = if (isDragging) {
+                            Modifier
+                                .zIndex(1f)
+                                .graphicsLayer { translationY = drag.draggedOffset() }
+                        } else {
+                            Modifier.animateItem()
+                        }
+                    ) {
+                        StudioPedalCard(
+                            slot = slot,
+                            position = index,
+                            chainLength = chain.size,
+                            onToggle = { onToggleSlot(slot.slotIndex) },
+                            onClick = { onOpenSlot(slot.slotIndex) },
+                            onMoveUp = if (index > 0) { { onMoveSlot(index, index - 1) } } else null,
+                            onMoveDown = if (index < chain.size - 1) { { onMoveSlot(index, index + 1) } } else null,
+                            modifier = if (isDragging) Modifier.border(2.dp, StudioPalette.Accent, RoundedCornerShape(8.dp)) else Modifier,
+                            dragHandle = if (!reorderEnabled) Modifier else Modifier.pointerInput(slot.slotIndex) {
+                                detectDragGestures(
+                                    onDragStart = {
+                                        drag.start(slot.slotIndex, currentEffects)
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    onDrag = { change, amount ->
+                                        change.consume()
+                                        drag.dragBy(amount.y)
+                                    },
+                                    onDragEnd = {
+                                        drag.finish()?.let { (from, to) ->
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            currentOnMoveSlot(from, to)
+                                        }
+                                    },
+                                    onDragCancel = { drag.finish() }
+                                )
+                            }
                         )
+
+                        // Patch Cable to the next card or marker
+                        if (!isLast) CableLine()
                     }
-                )
-
-                // FX Loop RETURN Marker if positioned after this slot
-                if (preset.fxLoopReturn == index + 1) {
-                    CableLine()
-                    FxLoopMarker(label = "↙ FX RETURN")
-                }
-
-                // Patch Cable between pedal cards
-                if (index < chain.size - 1) {
-                    CableLine()
                 }
             }
         }
@@ -303,20 +339,41 @@ private fun CableLine() {
 }
 
 @Composable
-private fun FxLoopMarker(label: String) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(StudioPalette.SurfaceElevated)
-            .border(1.dp, StudioPalette.AccentDim.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 10.dp, vertical = 3.dp)
+private fun FxLoopMarker(label: String, what: String, onMoveUp: (() -> Unit)?, onMoveDown: (() -> Unit)?) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(
-            text = label,
-            color = StudioPalette.Accent,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace
+        FxLoopMoveButton(Icons.Filled.KeyboardArrowUp, "Mover $what para cima", onMoveUp)
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(StudioPalette.SurfaceElevated)
+                .border(1.dp, StudioPalette.AccentDim.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 10.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = label,
+                color = StudioPalette.Accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace
+            )
+        }
+        FxLoopMoveButton(Icons.Filled.KeyboardArrowDown, "Mover $what para baixo", onMoveDown)
+    }
+}
+
+@Composable
+private fun FxLoopMoveButton(icon: ImageVector, description: String, onClick: (() -> Unit)?) {
+    IconButton(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = StudioPalette.Accent,
+            disabledContentColor = StudioPalette.TextMuted.copy(alpha = 0.35f)
         )
+    ) {
+        Icon(icon, contentDescription = description, modifier = Modifier.size(20.dp))
     }
 }

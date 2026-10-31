@@ -83,6 +83,15 @@ data class GP200Preset(
                 ((rawSource == null && other.rawSource == null) || (rawSource != null && other.rawSource != null && rawSource.contentEquals(other.rawSource)))
     }
 
+    companion object {
+        /**
+         * FX loop positions the app lets the user pick: the number of blocks before the marker.
+         * The live dump accepts 1..11 and the .prst decoder 1..10; editing stays inside both until
+         * the pedal confirms the real limits.
+         */
+        val FX_LOOP_POSITIONS = 1..10
+    }
+
     override fun hashCode(): Int {
         var result = patchName.hashCode()
         result = 31 * result + author.hashCode()
