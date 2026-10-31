@@ -300,6 +300,12 @@ private class ChainDragState(private val listState: LazyListState) {
             .filter { it.key is Int }
             .map { ChainDragLogic.ItemBounds(it.key, it.offset, it.offset + it.size) }
         val target = ChainDragLogic.dropTarget(key, center, cards) ?: return
+        // The list keeps its first visible item in place by key; when that item takes part in the swap,
+        // pin the scroll position instead so the dragged card stays on screen.
+        val targetIndex = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == target }?.index
+        if (item.index == listState.firstVisibleItemIndex || targetIndex == listState.firstVisibleItemIndex) {
+            listState.requestScrollToItem(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+        }
         order = ChainDragLogic.move(
             current,
             fromIndex = current.indexOfFirst { it.slotIndex == key },
