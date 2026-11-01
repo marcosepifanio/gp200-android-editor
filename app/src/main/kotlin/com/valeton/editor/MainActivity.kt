@@ -34,6 +34,7 @@ import androidx.lifecycle.lifecycleScope
 import com.valeton.editor.core.catalog.DrumCatalog
 import com.valeton.editor.core.codec.PRSTDecoder
 import com.valeton.editor.core.codec.PRSTEncoder
+import com.valeton.editor.core.codec.PresetImportCheck
 import com.valeton.editor.core.codec.SysExCodec
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.repository.PresetLibraryRepository
@@ -50,6 +51,7 @@ import com.valeton.editor.ui.drums.StudioDrumMiniPlayer
 import com.valeton.editor.ui.drums.StudioDrumScreen
 import com.valeton.editor.ui.editor.StudioPedalEditorScreen
 import com.valeton.editor.ui.manage.ImportPatchDialog
+import com.valeton.editor.ui.manage.ImportWarnings
 import com.valeton.editor.ui.manage.PatchMetadataDialog
 import com.valeton.editor.ui.manage.StudioPatchManagerScreen
 import com.valeton.editor.ui.sync.StudioFullSyncScreen
@@ -60,6 +62,9 @@ import com.valeton.editor.usb.MidiConnectionState
 import com.valeton.editor.viewmodel.ConnectionViewModel
 import com.valeton.editor.viewmodel.PresetViewModel
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
 
@@ -108,23 +113,35 @@ class MainActivity : ComponentActivity() {
                 var showMetadataDialog by remember { mutableStateOf(false) }
                 var showImportDialog by remember { mutableStateOf(false) }
                 var pendingImportPreset by remember { mutableStateOf<GP200Preset?>(null) }
+                var pendingImportWarnings by remember { mutableStateOf<List<String>>(emptyList()) }
                 var pendingExportBytes by rememberSaveable { mutableStateOf<ByteArray?>(null) }
 
                 val handlePrstUri: (Uri) -> Unit = remember {
                     { uri ->
-                        try {
-                            contentResolver.openInputStream(uri)?.use { inputStream ->
-                                val bytes = inputStream.readBytes()
-                                val decoder = PRSTDecoder(bytes)
-                                val preset = decoder.decode()
-                                pendingImportPreset = preset
+                        lifecycleScope.launch {
+                            // Bounded read off the main thread: the URI may come from any app.
+                            val result = withContext(Dispatchers.IO) {
+                                runCatching {
+                                    contentResolver.openInputStream(uri)?.use {
+                                        // Refuse a broken chain and hold knob values to the catalog before anything reaches the pedal.
+                                        PresetImportCheck.check(PRSTDecoder(PRSTDecoder.readFile(it)).decode())
+                                    }
+                                }
+                            }
+                            val checked = result.getOrNull()
+                            if (checked != null) {
+                                pendingImportPreset = checked.preset
+                                pendingImportWarnings = ImportWarnings.lines(checked)
                                 showImportDialog = true
                                 showWelcomeScreen = false
-                            } ?: run {
-                                Toast.makeText(this@MainActivity, "Não foi possível abrir o arquivo", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val message = if (result.exceptionOrNull() is IllegalArgumentException) {
+                                    "Arquivo .prst inválido."
+                                } else {
+                                    "Não foi possível abrir o arquivo."
+                                }
+                                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
                             }
-                        } catch (e: Exception) {
-                            Toast.makeText(this@MainActivity, "Erro ao abrir .prst: ${e.message}", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -364,6 +381,13 @@ class MainActivity : ComponentActivity() {
                                                 onMoveSlot = { fromIndex, toIndex ->
                                                     presetViewModel.reorderSlots(fromIndex, toIndex)
                                                 },
+                                                onMoveFxLoopSend = { position ->
+                                                    presetViewModel.moveFxLoopSend(position)
+                                                },
+                                                onMoveFxLoopReturn = { position ->
+                                                    presetViewModel.moveFxLoopReturn(position)
+                                                },
+                                                reorderEnabled = !uiState.isSaving && !uiState.isImporting && !uiState.isPerformingFullSync,
                                                 onVolumeChange = { volume ->
                                                     presetViewModel.updatePatchVolume(volume)
                                                 },
@@ -497,6 +521,7 @@ class MainActivity : ComponentActivity() {
                         preset = pendingImportPreset,
                         currentSlot = uiState.currentSlotNumber,
                         presetNames = uiState.presetNames,
+                        warnings = pendingImportWarnings,
                         onDismiss = {
                             intent?.data = null
                             showImportDialog = false

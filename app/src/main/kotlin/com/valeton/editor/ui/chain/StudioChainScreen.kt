@@ -2,23 +2,48 @@ package com.valeton.editor.ui.chain
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.valeton.editor.BuildConfig
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.ui.theme.StudioPalette
+import kotlinx.coroutines.delay
 
 @Composable
 fun StudioChainScreen(
@@ -26,15 +51,43 @@ fun StudioChainScreen(
     onToggleSlot: (Int) -> Unit,
     onOpenSlot: (Int) -> Unit,
     onMoveSlot: (fromIndex: Int, toIndex: Int) -> Unit,
+    onMoveFxLoopSend: (position: Int) -> Unit = {},
+    onMoveFxLoopReturn: (position: Int) -> Unit = {},
     onVolumeChange: (Int) -> Unit = {},
     onPanChange: (Int) -> Unit = {},
     onTempoChange: (Int) -> Unit = {},
     onTapTempo: () -> Unit = {},
+    reorderEnabled: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val chain = preset.effects
+    val listState = rememberLazyListState()
+    val drag = remember { ChainDragState(listState) }
+    val haptics = LocalHapticFeedback.current
+    val currentOnMoveSlot by rememberUpdatedState(onMoveSlot)
+    val currentEffects by rememberUpdatedState(preset.effects)
+    // Cards always show the live slots; a drag only reorders them.
+    val chain = ChainDragLogic.arrange(preset.effects, drag.order)
+    val rows = ChainRows.build(chain.size, preset.fxLoopSend, preset.fxLoopReturn)
+    val send = preset.fxLoopSend
+    val ret = preset.fxLoopReturn
+
+    val edgeThreshold = with(LocalDensity.current) { 64.dp.toPx() }
+    LaunchedEffect(reorderEnabled) {
+        if (!reorderEnabled) drag.cancel()
+    }
+    LaunchedEffect(drag.draggingKey) {
+        while (drag.draggingKey != null) {
+            val step = drag.edgeScroll(edgeThreshold, maxSpeed = edgeThreshold / 4f)
+            if (step != 0f) {
+                listState.scrollBy(step)
+                drag.updateTarget()
+            }
+            delay(16)
+        }
+    }
 
     LazyColumn(
+        state = listState,
         modifier = modifier
             .fillMaxSize()
             .background(StudioPalette.Case)
@@ -75,33 +128,93 @@ fun StudioChainScreen(
                 CableLine()
             }
 
-        // 3. Pedal Cards with Interconnecting Cables
-        itemsIndexed(chain, key = { _, slot -> slot.slotIndex }) { index, slot ->
-            // FX Loop SEND Marker if positioned before this slot
-            if (preset.fxLoopSend == index) {
-                FxLoopMarker(label = "↗ FX SEND")
-                CableLine()
+        // 3. Pedal Cards and FX loop markers with Interconnecting Cables
+        items(rows, key = { row ->
+            when (row) {
+                is ChainRow.Pedal -> chain[row.index].slotIndex
+                ChainRow.FxSend -> "fx-send"
+                ChainRow.FxReturn -> "fx-return"
             }
+        }) { row ->
+            val isLast = row == rows.last()
+            when (row) {
+                ChainRow.FxSend -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.animateItem()
+                ) {
+                    FxLoopMarker(
+                        label = "↗ FX SEND",
+                        what = "FX Send",
+                        onMoveUp = (send - 1).takeIf { reorderEnabled && GP200Preset.fxLoopMoveAllowed(send, ret, it, ret) }?.let { { onMoveFxLoopSend(it) } },
+                        onMoveDown = (send + 1).takeIf { reorderEnabled && GP200Preset.fxLoopMoveAllowed(send, ret, it, ret) }?.let { { onMoveFxLoopSend(it) } }
+                    )
+                    if (!isLast) CableLine()
+                }
+                ChainRow.FxReturn -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.animateItem()
+                ) {
+                    FxLoopMarker(
+                        label = "↙ FX RETURN",
+                        what = "FX Return",
+                        onMoveUp = (ret - 1).takeIf { reorderEnabled && GP200Preset.fxLoopMoveAllowed(send, ret, send, it) }?.let { { onMoveFxLoopReturn(it) } },
+                        onMoveDown = (ret + 1).takeIf { reorderEnabled && GP200Preset.fxLoopMoveAllowed(send, ret, send, it) }?.let { { onMoveFxLoopReturn(it) } }
+                    )
+                    if (!isLast) CableLine()
+                }
+                is ChainRow.Pedal -> {
+                    val index = row.index
+                    val slot = chain[index]
+                    val isDragging = drag.draggingKey == slot.slotIndex
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = if (isDragging) {
+                            Modifier
+                                .zIndex(1f)
+                                .graphicsLayer { translationY = drag.draggedOffset() }
+                        } else {
+                            Modifier.animateItem()
+                        }
+                    ) {
+                        StudioPedalCard(
+                            slot = slot,
+                            position = index,
+                            chainLength = chain.size,
+                            onToggle = { onToggleSlot(slot.slotIndex) },
+                            onClick = { onOpenSlot(slot.slotIndex) },
+                            onMoveUp = if (index > 0) { { onMoveSlot(index, index - 1) } } else null,
+                            onMoveDown = if (index < chain.size - 1) { { onMoveSlot(index, index + 1) } } else null,
+                            modifier = if (isDragging) Modifier.border(2.dp, StudioPalette.Accent, RoundedCornerShape(8.dp)) else Modifier,
+                            dragHandle = if (!reorderEnabled) Modifier else Modifier.pointerInput(slot.slotIndex) {
+                                // Cancelled when the lock removes this handle mid-drag; onDragCancel does not run then.
+                                try {
+                                detectDragGestures(
+                                    onDragStart = {
+                                        drag.start(slot.slotIndex, currentEffects.map { it.slotIndex })
+                                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    onDrag = { change, amount ->
+                                        change.consume()
+                                        drag.dragBy(amount.y)
+                                    },
+                                    onDragEnd = {
+                                        drag.finish(currentEffects.map { it.slotIndex })?.let { (from, to) ->
+                                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            currentOnMoveSlot(from, to)
+                                        }
+                                    },
+                                    onDragCancel = { drag.cancel() }
+                                )
+                                } finally {
+                                    drag.cancel(slot.slotIndex)
+                                }
+                            }
+                        )
 
-            StudioPedalCard(
-                slot = slot,
-                position = index,
-                chainLength = chain.size,
-                onToggle = { onToggleSlot(slot.slotIndex) },
-                onClick = { onOpenSlot(slot.slotIndex) },
-                onMoveUp = if (index > 0) { { onMoveSlot(index, index - 1) } } else null,
-                onMoveDown = if (index < chain.size - 1) { { onMoveSlot(index, index + 1) } } else null
-            )
-
-            // FX Loop RETURN Marker if positioned after this slot
-            if (preset.fxLoopReturn == index + 1) {
-                CableLine()
-                FxLoopMarker(label = "↙ FX RETURN")
-            }
-
-            // Patch Cable between pedal cards
-            if (index < chain.size - 1) {
-                CableLine()
+                        // Patch Cable to the next card or marker
+                        if (!isLast) CableLine()
+                    }
+                }
             }
         }
 
@@ -132,6 +245,100 @@ fun StudioChainScreen(
                     .padding(vertical = 16.dp)
             )
         }
+    }
+}
+
+/**
+ * Drag state for the chain. While a card is dragged only the local block [order] changes; the view model
+ * gets a single move when the finger lifts, so the pedal receives one reorder message.
+ */
+private class ChainDragState(private val listState: LazyListState) {
+    /** Block keys (slotIndex) in the dragged order; the cards themselves come from the live preset. */
+    var order by mutableStateOf<List<Int>?>(null)
+        private set
+    var draggingKey by mutableStateOf<Int?>(null)
+        private set
+    private var initialOffset = 0
+    private var dragDelta by mutableFloatStateOf(0f)
+
+    private fun draggedItem() = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == draggingKey }
+
+    fun start(key: Int, keys: List<Int>) {
+        val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key } ?: return
+        order = keys
+        draggingKey = key
+        initialOffset = item.offset
+        dragDelta = 0f
+    }
+
+    /**
+     * Translation that keeps the dragged card under the finger while the list re-lays out around it,
+     * held inside the pedal area so it never slides over the header or the output panel.
+     */
+    fun draggedOffset(): Float {
+        val item = draggedItem() ?: return 0f
+        val chain = order ?: return 0f
+        val info = listState.layoutInfo
+        val first = info.visibleItemsInfo.firstOrNull { it.key == chain.first() }
+        val last = info.visibleItemsInfo.firstOrNull { it.key == chain.last() }
+        val top = ChainDragLogic.clampTop(
+            top = initialOffset + dragDelta,
+            size = item.size,
+            areaStart = first?.offset,
+            areaEnd = last?.let { it.offset + it.size },
+            viewportStart = info.viewportStartOffset,
+            viewportEnd = info.viewportEndOffset
+        )
+        return top - item.offset
+    }
+
+    fun dragBy(amount: Float) {
+        dragDelta += amount
+        updateTarget()
+    }
+
+    fun updateTarget() {
+        val key = draggingKey ?: return
+        val item = draggedItem() ?: return
+        val current = order ?: return
+        val center = item.offset + draggedOffset() + item.size / 2f
+        val cards = listState.layoutInfo.visibleItemsInfo
+            .filter { it.key is Int }
+            .map { ChainDragLogic.ItemBounds(it.key, it.offset, it.offset + it.size) }
+        val target = ChainDragLogic.dropTarget(key, center, cards) ?: return
+        // The list keeps its first visible item in place by key; when that item takes part in the swap,
+        // pin the scroll position instead so the dragged card stays on screen.
+        val targetIndex = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == target }?.index
+        if (item.index == listState.firstVisibleItemIndex || targetIndex == listState.firstVisibleItemIndex) {
+            listState.requestScrollToItem(listState.firstVisibleItemIndex, listState.firstVisibleItemScrollOffset)
+        }
+        order = ChainDragLogic.move(current, fromIndex = current.indexOf(key), toIndex = current.indexOf(target))
+    }
+
+    fun edgeScroll(threshold: Float, maxSpeed: Float): Float {
+        val item = draggedItem() ?: return 0f
+        val start = item.offset + draggedOffset()
+        val info = listState.layoutInfo
+        return ChainDragLogic.edgeScroll(start, start + item.size, info.viewportStartOffset, info.viewportEndOffset, threshold, maxSpeed)
+    }
+
+    /**
+     * Ends the drag and returns the (from, to) move against the live chain [currentKeys], or null when the
+     * card did not change place.
+     */
+    fun finish(currentKeys: List<Int>): Pair<Int, Int>? {
+        val key = draggingKey
+        val dragged = order
+        cancel()
+        return if (key == null || dragged == null) null else ChainDragLogic.dropMove(currentKeys, key, dragged)
+    }
+
+    /** Drops the drag without moving anything; with [key], only when that card is the one being dragged. */
+    fun cancel(key: Int? = null) {
+        if (key != null && key != draggingKey) return
+        order = null
+        draggingKey = null
+        dragDelta = 0f
     }
 }
 
@@ -166,20 +373,41 @@ private fun CableLine() {
 }
 
 @Composable
-private fun FxLoopMarker(label: String) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(StudioPalette.SurfaceElevated)
-            .border(1.dp, StudioPalette.AccentDim.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 10.dp, vertical = 3.dp)
+private fun FxLoopMarker(label: String, what: String, onMoveUp: (() -> Unit)?, onMoveDown: (() -> Unit)?) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(
-            text = label,
-            color = StudioPalette.Accent,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace
+        FxLoopMoveButton(Icons.Filled.KeyboardArrowUp, "Mover $what para cima", onMoveUp)
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(StudioPalette.SurfaceElevated)
+                .border(1.dp, StudioPalette.AccentDim.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                .padding(horizontal = 10.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = label,
+                color = StudioPalette.Accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace
+            )
+        }
+        FxLoopMoveButton(Icons.Filled.KeyboardArrowDown, "Mover $what para baixo", onMoveDown)
+    }
+}
+
+@Composable
+private fun FxLoopMoveButton(icon: ImageVector, description: String, onClick: (() -> Unit)?) {
+    IconButton(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = StudioPalette.Accent,
+            disabledContentColor = StudioPalette.TextMuted.copy(alpha = 0.35f)
         )
+    ) {
+        Icon(icon, contentDescription = description, modifier = Modifier.size(20.dp))
     }
 }

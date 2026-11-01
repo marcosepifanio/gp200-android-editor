@@ -100,6 +100,13 @@ class AndroidMidiDriverTest {
     }
 
     @Test
+    fun `handleIncomingMidi drops a SysEx message that never ends`() {
+        driver.handleIncomingMidi(byteArrayOf(0xF0.toByte()) + ByteArray(AndroidMidiDriver.MAX_SYSEX_SIZE * 4))
+
+        assertTrue(driver.bufferedSysExSize <= AndroidMidiDriver.MAX_SYSEX_SIZE)
+    }
+
+    @Test
     fun `sendPresetChange sends CC0 Bank Select, Program Change, and SysEx change`() {
         allSentMessages.clear()
         driver.sendPresetChange(130) // Slot 130 -> Bank MSB = 1, PC = 2

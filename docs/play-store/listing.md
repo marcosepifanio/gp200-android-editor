@@ -98,6 +98,12 @@ Nomes dos IRs e SnapTones da pedaleira, salvar em outro slot e sincronização a
 O botão Ressincronizar fica desabilitado no modo offline, sem travar na tela de sincronização.
 ```
 
+- **Notas da versão (pt-BR)** para 1.0.7 (16):
+
+```
+Arraste os cards para reordenar a cadeia e mova o FX Send e o FX Return com as setas. A importação de .prst confere os valores antes de enviar à pedaleira e avisa o que foi ajustado. App menor e importação mais segura.
+```
+
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.
 
 ## Pendências antes da produção

@@ -20,8 +20,8 @@ android {
         applicationId = "io.github.marcosepifanio.gp200editor"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.0.6"
+        versionCode = 16
+        versionName = "1.0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,7 +40,8 @@ android {
     buildTypes {
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

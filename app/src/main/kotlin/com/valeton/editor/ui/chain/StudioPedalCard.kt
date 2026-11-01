@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -53,7 +53,8 @@ fun StudioPedalCard(
     onClick: () -> Unit,
     onMoveUp: (() -> Unit)?,
     onMoveDown: (() -> Unit)?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    dragHandle: Modifier = Modifier
 ) {
     val effectDef: EffectDefinition? = EffectCatalog.getEffectById(slot.effectId)
     val module = ModuleType.fromSlotIndex(slot.slotIndex)
@@ -87,15 +88,15 @@ fun StudioPedalCard(
             .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 1. Grip / Reorder Column
-        Box {
+        // 1. Grip: drag to reorder, tap for the move menu
+        Box(modifier = dragHandle) {
             IconButton(
                 onClick = { showMoveMenu = true },
                 modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${position + 1}", color = textColor, fontSize = 12.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
-                    Icon(Icons.Default.MoreVert, contentDescription = "Reordenar efeito", tint = StudioPalette.TextMuted, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.DragIndicator, contentDescription = "Reordenar efeito", tint = StudioPalette.TextMuted, modifier = Modifier.size(16.dp))
                 }
             }
             DropdownMenu(expanded = showMoveMenu, onDismissRequest = { showMoveMenu = false }, containerColor = StudioPalette.SurfaceElevated) {

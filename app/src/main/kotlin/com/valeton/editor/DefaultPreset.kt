@@ -41,6 +41,6 @@ internal fun createDefaultPreset(): GP200Preset {
     return GP200Preset(
         patchName = "Preset Inicial",
         effects = effects,
-        routingOrder = listOf(4, 0, 1, 2, 3, 5, 6, 7, 8, 9, 10)
+        routingOrder = effects.map { it.slotIndex }
     )
 }

@@ -6,6 +6,22 @@ import org.junit.jupiter.api.Test
 class PRSTCodecTest {
 
     @Test
+    fun `readFile returns the bytes of a prst-sized stream`() {
+        val bytes = ByteArray(1224) { it.toByte() }
+        assertArrayEquals(bytes, PRSTDecoder.readFile(bytes.inputStream()))
+    }
+
+    @Test
+    fun `readFile rejects an oversized stream without reading all of it`() {
+        val endless = object : java.io.InputStream() {
+            var reads = 0L
+            override fun read(): Int { reads++; return 0 }
+        }
+        assertThrows(IllegalArgumentException::class.java) { PRSTDecoder.readFile(endless) }
+        assertTrue(endless.reads <= PRSTDecoder.MAX_FILE_SIZE + 1L)
+    }
+
+    @Test
     fun `decode maintainer clean prst file successfully`() {
         val stream = javaClass.classLoader.getResourceAsStream("fixtures/clean.prst")
         assertNotNull(stream, "Fixture clean.prst must exist in test resources")

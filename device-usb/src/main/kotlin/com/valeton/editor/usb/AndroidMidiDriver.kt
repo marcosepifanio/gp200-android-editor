@@ -36,6 +36,11 @@ class AndroidMidiDriver internal constructor(
         coroutineScope: CoroutineScope
     ) : this(context as Context?, coroutineScope, null, Dispatchers.IO)
 
+    companion object {
+        /** Well above the largest GP-200 reply (a preset read chunk is a few hundred bytes). */
+        internal const val MAX_SYSEX_SIZE = 4096
+    }
+
     private val midiManager: MidiManager? =
         context?.getSystemService(Context.MIDI_SERVICE) as? MidiManager
 
@@ -243,6 +248,8 @@ class AndroidMidiDriver internal constructor(
         }, handler)
     }
 
+    internal val bufferedSysExSize: Int get() = synchronized(incomingSysExStream) { incomingSysExStream.size() }
+
     internal fun handleIncomingMidi(bytes: ByteArray) {
         DebugLog.d("ValetonMidi") { "RX [${bytes.size}]: ${bytes.joinToString(" ") { "%02X".format(it) }}" }
         synchronized(incomingSysExStream) {
@@ -251,6 +258,11 @@ class AndroidMidiDriver internal constructor(
                     incomingSysExStream.reset()
                     incomingSysExStream.write(b.toInt())
                 } else if (incomingSysExStream.size() > 0) {
+                    if (incomingSysExStream.size() >= MAX_SYSEX_SIZE) {
+                        // A message without F7 would grow forever; drop it and wait for the next F0.
+                        incomingSysExStream.reset()
+                        continue
+                    }
                     incomingSysExStream.write(b.toInt())
                     if (b == 0xF7.toByte()) {
                         val completeMsg = incomingSysExStream.toByteArray()

@@ -51,6 +51,7 @@ class FakeMidiManager : MidiConnectionManager {
     val toggles = mutableListOf<Pair<Int, Boolean>>()
     val params = mutableListOf<List<Any>>()
     val reorders = mutableListOf<List<Int>>()
+    val fxLoopReorders = mutableListOf<Pair<Int, Int>>()
     val saves = mutableListOf<Pair<String, Int>>()
     val effectChanges = mutableListOf<Pair<Int, Int>>()
     val requestedReads = mutableListOf<Int>()
@@ -114,6 +115,7 @@ class FakeMidiManager : MidiConnectionManager {
     }
     override fun sendReorder(order: List<Int>, send: Int, ret: Int) {
         reorders.add(order)
+        fxLoopReorders.add(send to ret)
     }
 
     val verificationReads = mutableListOf<Int>()
@@ -285,6 +287,54 @@ class PresetViewModelTest {
         assertEquals(0, routing[1])
 
         assertEquals(1, fakeMidi.reorders.size)
+    }
+
+    @Test
+    fun `moveFxLoopSend and moveFxLoopReturn keep send at or before return and dispatch reorder`() {
+        val fakeMidi = FakeMidiManager()
+        val viewModel = PresetViewModel(fakeMidi)
+        viewModel.loadPreset(createInitialPreset().copy(fxLoopSend = 4, fxLoopReturn = 4))
+
+        viewModel.moveFxLoopSend(5) // Would put Send after Return.
+        viewModel.moveFxLoopReturn(3) // Would put Return before Send.
+        assertEquals(4, viewModel.uiState.value.preset!!.fxLoopSend)
+        assertEquals(4, viewModel.uiState.value.preset!!.fxLoopReturn)
+        assertTrue(fakeMidi.reorders.isEmpty())
+
+        viewModel.moveFxLoopReturn(6)
+        viewModel.moveFxLoopSend(2)
+
+        val preset = viewModel.uiState.value.preset!!
+        assertEquals(2, preset.fxLoopSend)
+        assertEquals(6, preset.fxLoopReturn)
+        assertTrue(viewModel.uiState.value.hasUnsavedChanges)
+        assertEquals(listOf(4 to 6, 2 to 6), fakeMidi.fxLoopReorders)
+        assertEquals(listOf(preset.routingOrder, preset.routingOrder), fakeMidi.reorders)
+    }
+
+    @Test
+    fun `moveFxLoop refuses positions outside the range both codecs accept`() {
+        val fakeMidi = FakeMidiManager()
+        val viewModel = PresetViewModel(fakeMidi)
+        viewModel.loadPreset(createInitialPreset().copy(fxLoopSend = 1, fxLoopReturn = 10))
+
+        viewModel.moveFxLoopSend(0)
+        viewModel.moveFxLoopReturn(11)
+
+        assertEquals(1, viewModel.uiState.value.preset!!.fxLoopSend)
+        assertEquals(10, viewModel.uiState.value.preset!!.fxLoopReturn)
+        assertTrue(fakeMidi.reorders.isEmpty())
+    }
+
+    @Test
+    fun `reorderSlots keeps the fx loop positions in the reorder message`() {
+        val fakeMidi = FakeMidiManager()
+        val viewModel = PresetViewModel(fakeMidi)
+        viewModel.loadPreset(createInitialPreset().copy(fxLoopSend = 2, fxLoopReturn = 7))
+
+        viewModel.reorderSlots(0, 5)
+
+        assertEquals(listOf(2 to 7), fakeMidi.fxLoopReorders)
     }
 
     @Test
@@ -1560,6 +1610,8 @@ class PresetViewModelTest {
         vm.toggleSlot(sent.effects.first().slotIndex)
         vm.updateParam(sent.effects.first().slotIndex, 0, 99f)
         vm.reorderSlots(0, 1)
+        vm.moveFxLoopSend(2)
+        vm.moveFxLoopReturn(6)
         vm.updatePatchVolume(1)
         vm.updatePatchTempo(200)
 
@@ -2110,5 +2162,18 @@ class PresetViewModelTest {
         vm.saveAs(10, "Novo", "Autor", 70)
         assertEquals(targetName, vm.uiState.value.presetNames[10])
         assertEquals("Falha ao salvar na pedaleira. Suas alterações continuam pendentes.", vm.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `an FX loop with Send after Return can be walked back`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        vm.loadPreset(createInitialPreset().copy(fxLoopSend = 8, fxLoopReturn = 3), slot = 0)
+        vm.moveFxLoopSend(7)
+        assertEquals(7, vm.uiState.value.preset?.fxLoopSend)
+        vm.moveFxLoopReturn(4)
+        assertEquals(4, vm.uiState.value.preset?.fxLoopReturn)
+        vm.moveFxLoopSend(9)
+        assertEquals(7, vm.uiState.value.preset?.fxLoopSend, "A move that widens the inversion is refused")
     }
 }

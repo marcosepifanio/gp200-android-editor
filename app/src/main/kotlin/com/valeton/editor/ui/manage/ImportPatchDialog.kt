@@ -31,6 +31,7 @@ fun ImportPatchDialog(
     currentSlot: Int,
     connected: Boolean = true,
     presetNames: List<String> = emptyList(),
+    warnings: List<String> = emptyList(),
     onDismiss: () -> Unit,
     onConfirmImport: (targetSlot: Int, saveToPedal: Boolean) -> Unit
 ) {
@@ -74,6 +75,29 @@ fun ImportPatchDialog(
                             fontSize = 12.sp,
                             fontFamily = FontFamily.Monospace
                         )
+                    }
+                }
+
+                if (warnings.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(StudioPalette.Surface)
+                            .border(1.dp, StudioPalette.AmberLed.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "ATENÇÃO",
+                            color = StudioPalette.AmberLed,
+                            fontSize = 12.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold
+                        )
+                        warnings.forEach { line ->
+                            Text(text = line, color = StudioPalette.TextSecondary, fontSize = 13.sp)
+                        }
                     }
                 }
 

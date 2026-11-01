@@ -83,6 +83,27 @@ data class GP200Preset(
                 ((rawSource == null && other.rawSource == null) || (rawSource != null && other.rawSource != null && rawSource.contentEquals(other.rawSource)))
     }
 
+    companion object {
+        /**
+         * FX loop positions the app lets the user pick: the number of blocks before the marker.
+         * The live dump accepts 1..11 and the .prst decoder 1..10; editing stays inside both until
+         * the pedal confirms the real limits.
+         */
+        val FX_LOOP_POSITIONS = 1..10
+
+        /**
+         * Whether moving one FX loop marker from (send, ret) to (newSend, newRet) is allowed: exactly one marker
+         * moves, to an editable position, and Send does not pass Return. A Send after Return that came from the
+         * pedal or a file may still move when the move shrinks that gap, so the user can always undo it.
+         */
+        fun fxLoopMoveAllowed(send: Int, ret: Int, newSend: Int, newRet: Int): Boolean {
+            val sendMoves = newSend != send
+            if (sendMoves == (newRet != ret)) return false
+            if ((if (sendMoves) newSend else newRet) !in FX_LOOP_POSITIONS) return false
+            return newSend <= newRet || newSend - newRet < send - ret
+        }
+    }
+
     override fun hashCode(): Int {
         var result = patchName.hashCode()
         result = 31 * result + author.hashCode()

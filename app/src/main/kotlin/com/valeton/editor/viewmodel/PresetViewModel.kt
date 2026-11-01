@@ -715,6 +715,33 @@ class PresetViewModel(
         midiManager.sendReorder(currentRouting, currentPreset.fxLoopSend, currentPreset.fxLoopReturn)
     }
 
+    /** Moves the FX loop Send; see [GP200Preset.fxLoopMoveAllowed]. */
+    fun moveFxLoopSend(position: Int) {
+        val currentPreset = _uiState.value.preset ?: return
+        moveFxLoop(position, currentPreset.fxLoopReturn)
+    }
+
+    /** Moves the FX loop Return; see [GP200Preset.fxLoopMoveAllowed]. */
+    fun moveFxLoopReturn(position: Int) {
+        val currentPreset = _uiState.value.preset ?: return
+        moveFxLoop(currentPreset.fxLoopSend, position)
+    }
+
+    private fun moveFxLoop(send: Int, ret: Int) {
+        if (editingBusy()) return
+        val currentPreset = _uiState.value.preset ?: return
+        if (!GP200Preset.fxLoopMoveAllowed(currentPreset.fxLoopSend, currentPreset.fxLoopReturn, send, ret)) return
+
+        _uiState.update {
+            it.copy(
+                preset = currentPreset.copy(fxLoopSend = send, fxLoopReturn = ret),
+                hasUnsavedChanges = true
+            )
+        }
+
+        midiManager.sendReorder(currentPreset.routingOrder, send, ret)
+    }
+
     fun renamePatch(newName: String) {
         if (editingBusy()) return
         val currentPreset = _uiState.value.preset ?: return

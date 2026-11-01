@@ -3,6 +3,7 @@ package com.valeton.editor.core.codec
 import com.valeton.editor.core.binary.BinaryParser
 import com.valeton.editor.core.model.EffectSlot
 import com.valeton.editor.core.model.GP200Preset
+import java.io.InputStream
 
 class PRSTDecoder(private val buffer: ByteArray) {
     private val parser = BinaryParser(buffer)
@@ -32,6 +33,21 @@ class PRSTDecoder(private val buffer: ByteArray) {
         const val MODEL_OFFSET = 8
         const val PARAMS_OFFSET = 0x0C
         const val PARAMS_COUNT = 15
+        const val MAX_FILE_SIZE = 1224
+
+        /** Reads a .prst stream, refusing anything larger than the format before it is buffered. */
+        fun readFile(input: InputStream): ByteArray {
+            // InputStream.readNBytes needs Android API 33; the app supports API 26.
+            val buffer = ByteArray(MAX_FILE_SIZE + 1)
+            var size = 0
+            while (size < buffer.size) {
+                val read = input.read(buffer, size, buffer.size - size)
+                if (read < 0) break
+                size += read
+            }
+            require(size <= MAX_FILE_SIZE) { "Invalid .prst file: larger than $MAX_FILE_SIZE bytes" }
+            return buffer.copyOf(size)
+        }
     }
 
     fun hasMagic(): Boolean {
