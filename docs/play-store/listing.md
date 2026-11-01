@@ -24,10 +24,11 @@ Edite presets da pedaleira GP-200 por USB. App independente e não oficial.
 Editor para GP-200 é um aplicativo independente para editar e organizar presets da pedaleira Valeton GP-200 pelo celular, conectado por cabo USB.
 
 O que você pode fazer:
-• Ver a cadeia de sinal do preset, ligar e desligar blocos e mudar a ordem dos efeitos.
+• Ver a cadeia de sinal do preset, ligar e desligar blocos, arrastar os efeitos para mudar a ordem e posicionar o FX Loop.
 • Trocar modelos de efeitos e ajustar seus parâmetros, com busca por categoria e efeitos favoritos.
-• Navegar pelos slots de presets da pedaleira, renomear e salvar alterações, com conferência da gravação.
-• Importar arquivos .prst e exportar ou compartilhar presets com outros apps.
+• Ver os nomes dos seus IRs e SnapTones gravados na pedaleira.
+• Navegar pelos slots de presets da pedaleira, renomear e salvar alterações no mesmo slot ou em outro, com conferência da gravação.
+• Importar arquivos .prst, com conferência dos valores antes de enviar à pedaleira, e exportar ou compartilhar presets com outros apps.
 • Configurar os três knobs físicos e os controles CTRL 1 a CTRL 4.
 • Controlar os ritmos: padrão, volume, andamento e reprodução.
 • Explorar o app sem a pedaleira, no modo offline.
@@ -102,6 +103,12 @@ O botão Ressincronizar fica desabilitado no modo offline, sem travar na tela de
 
 ```
 Arraste os cards para reordenar a cadeia e mova o FX Send e o FX Return com as setas. A importação de .prst confere os valores antes de enviar à pedaleira e avisa o que foi ajustado. App menor e importação mais segura.
+```
+
+- **Notas da versão (pt-BR)** para 1.0.8 (17):
+
+```
+Opções de efeitos que não cabiam na tela agora passam para a linha de baixo, como o Midrange do Classic Bass. Ao segurar a alça de um efeito na cadeia, o card fica destacado antes de você arrastar.
 ```
 
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.

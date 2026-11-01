@@ -343,44 +343,27 @@ fun StudioPedalEditorScreen(
                         is KnobParam -> Unit
                         is SwitchParam -> {
                             val currentVal = slot.params.getOrElse(param.index) { param.defaultValue }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = param.name.uppercase(),
-                                    color = StudioPalette.TextPrimary,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace
-                                )
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    param.options.forEach { opt ->
-                                        val isSelected = currentVal.toInt() == opt.id
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(4.dp))
-                                                .background(if (isSelected) StudioPalette.Accent else StudioPalette.SurfaceRaised)
-                                                .clickable { onParamChange(param.index, opt.id.toFloat()) }
-                                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                                        ) {
-                                            Text(
-                                                text = opt.name,
-                                                color = if (isSelected) Color.Black else StudioPalette.TextPrimary,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                fontFamily = FontFamily.Monospace
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            ParamOptionRow(
+                                name = param.name.uppercase(),
+                                options = param.options,
+                                selectedId = currentVal.toInt(),
+                                onSelect = { onParamChange(param.index, it.toFloat()) },
+                                bordered = false,
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                         is ComboBoxParam -> {
                             val currentVal = slot.params.getOrElse(param.index) { param.defaultValue }
-                            Row(
+                            if (param.options.size <= 5) {
+                                ParamOptionRow(
+                                    name = param.name.uppercase(),
+                                    options = param.options,
+                                    selectedId = currentVal.toInt(),
+                                    onSelect = { onParamChange(param.index, it.toFloat()) },
+                                    bordered = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            } else Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -393,34 +376,7 @@ fun StudioPedalEditorScreen(
                                     fontFamily = FontFamily.Monospace
                                 )
 
-                                if (param.options.size <= 5) {
-                                    // Segmented interactive pill buttons (e.g. C-Chorus Modes 1, 2, 3, 4)
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        param.options.forEach { opt ->
-                                            val isSelected = currentVal.toInt() == opt.id
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(4.dp))
-                                                    .background(if (isSelected) StudioPalette.Accent else StudioPalette.SurfaceRaised)
-                                                    .border(
-                                                        1.dp,
-                                                        if (isSelected) StudioPalette.Accent else StudioPalette.Border,
-                                                        RoundedCornerShape(4.dp)
-                                                    )
-                                                    .clickable { onParamChange(param.index, opt.id.toFloat()) }
-                                                    .padding(horizontal = 10.dp, vertical = 5.dp)
-                                            ) {
-                                                Text(
-                                                    text = opt.name,
-                                                    color = if (isSelected) Color.Black else StudioPalette.TextPrimary,
-                                                    fontSize = 12.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontFamily = FontFamily.Monospace
-                                                )
-                                            }
-                                        }
-                                    }
-                                } else {
+                                run {
                                     // Dropdown Menu for larger option lists (scales, pitch offsets, etc.)
                                     var expanded by remember { mutableStateOf(false) }
                                     val activeOption = param.options.find { it.id == currentVal.toInt() }?.name

@@ -2,7 +2,7 @@
 
 Editor independente de presets para pedaleiras Valeton GP-200, feito para Android com Kotlin, Jetpack Compose e Material 3. Conecte a pedaleira por USB MIDI para editar efeitos, organizar presets e controlar os ritmos pelo celular.
 
-**Versão atual do projeto: 1.0.7.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
+**Versão atual do projeto: 1.0.8.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
 
 O app não acessa a internet nem coleta dados pessoais; veja a [política de privacidade](docs/privacy-policy.md).
 
@@ -28,18 +28,26 @@ Este projeto não é um produto oficial da Valeton e não declara afiliação ou
   <tr>
     <td colspan="3" align="center"><img src="docs/images/selecao-favoritos.png" width="300" alt="Seletor de efeitos com a aba Favoritos visível e um amplificador marcado"><br><b>Efeitos favoritos</b><br>Marque modelos com a estrela e filtre os favoritos do bloco atual.</td>
   </tr>
+  <tr>
+    <td align="center"><img src="docs/images/cadeia-arrastar.png" width="260" alt="Cadeia de sinal com o card do B-Wah destacado ao ser segurado pela alça e os marcadores FX Send e FX Return com setas"><br><b>Reordenar a cadeia</b><br>Segure a alça e arraste o card; mova o FX Send e o FX Return com as setas.</td>
+    <td align="center"><img src="docs/images/edicao-opcoes.png" width="260" alt="Editor do amplificador Classic Bass com as cinco opções de Midrange visíveis abaixo do nome do parâmetro"><br><b>Opções legíveis</b><br>Opções que não cabem ao lado do nome passam para a linha de baixo.</td>
+    <td align="center"><img src="docs/images/salvar-como.png" width="260" alt="Diálogo Configurações do patch com nome, autor, volume e local do patch"><br><b>Salvar em outro slot</b><br>Toque longo em Salvar para mudar nome, autor, volume e local do patch.</td>
+  </tr>
 </table>
 
-As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As imagens não representam uma conexão MIDI ativa.
+As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As capturas de reordenação da cadeia, das opções do Classic Bass e do diálogo de salvar em outro slot são da versão 1.0.8, também no emulador offline; por isso o botão **Salvar na pedaleira** aparece desabilitado. As imagens não representam uma conexão MIDI ativa.
 
 ## Recursos
 
-- **11 blocos de efeitos:** PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL, com ativação, edição e reordenação da cadeia.
+- **11 blocos de efeitos:** PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL, com ativação e edição. Para reordenar, segure a alça do card (ele fica destacado) e arraste; um toque rápido na alça abre o menu Mover para cima/baixo.
+- **FX Loop:** os marcadores FX Send e FX Return aparecem na cadeia e podem ser movidos com as setas, sempre com o Send antes do Return.
+- **Editor de parâmetros:** knobs respeitam faixa e passo do catálogo; opções de switches e seletores que não cabem ao lado do nome passam para a linha de baixo, sem cortar nenhuma.
+- **Nomes de IR e SnapTone:** ao conectar, o app lê os nomes dos 20 User IRs e dos 10 SnapTones gravados na pedaleira e os mostra no seletor, na cadeia, no editor e nos controles. Os nomes ficam guardados para uso offline.
 - **Efeitos favoritos:** marque ou desmarque modelos pela estrela no seletor. A aba **Favoritos** aparece quando o bloco atual tem efeitos marcados e combina com a busca; os favoritos ficam salvos no app e são compartilhados entre patches, nos modos online e offline, sem serem alterados pela sincronização da pedaleira.
 - **Parâmetros do patch:** volume, Pan, tempo e Tap Tempo.
 - **Biblioteca de 256 slots:** sincronização com a pedaleira, busca, renomeação e cache local.
-- **Arquivos `.prst`:** importação com confirmação, exportação para armazenamento e compartilhamento por outros apps. A leitura aceita arquivos de 1176 ou 1224 bytes; a exportação gera 1224 bytes.
-- **Salvamento com verificação:** o app lê o slot após a escrita e compara a resposta com o preset esperado antes de confirmar o resultado.
+- **Arquivos `.prst`:** importação com confirmação, exportação para armazenamento e compartilhamento por outros apps. A leitura aceita arquivos de 1176 ou 1224 bytes; a exportação gera 1224 bytes. Antes de chegar à pedaleira, o arquivo é conferido: cadeia sem os 11 blocos é recusada, valores fora da faixa ou das opções do catálogo são ajustados e modelos desconhecidos são mantidos; o diálogo de importação avisa o que mudou.
+- **Salvamento com verificação:** o app lê o slot após a escrita e compara a resposta com o preset esperado antes de confirmar o resultado. Um toque em **Salvar** grava no slot atual; o toque longo abre **Configurações do patch**, onde é possível mudar nome, autor e volume e escolher outro slot de destino, com confirmação antes de substituir.
 - **Ritmos:** catálogo de 100 padrões com busca e filtros por gênero, reprodução na pedaleira, volume e BPM.
 - **Controles físicos:** configuração dos três knobs físicos e dos CTRL 1 a CTRL 4. Cada CTRL pode ter vários blocos entre PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL.
 - **Sobre:** versão da compilação, aviso de aplicativo não oficial da Valeton e créditos dos projetos utilizados.
@@ -52,8 +60,8 @@ O app é um controlador/editor: o processamento de guitarra e a reprodução dos
 2. Use um aparelho com **Android 8.0 (API 26) ou superior**, suporte a USB host/OTG e MIDI.
 3. Conecte a pedaleira ligada usando um cabo de dados compatível com o seu aparelho e adaptador OTG, se necessário.
 4. Abra o app, toque em **Conectar Pedaleira** e aguarde a sincronização. Sem um cache completo, o app precisa ler a biblioteca de 256 slots; com cache, ele sincroniza de novo na primeira conexão de cada dia.
-5. Abra um bloco na aba **Cadeia** para editar seus parâmetros. Use **Presets** para navegar pelos slots, importar, exportar e compartilhar.
-6. Use **Salvar** para gravar na pedaleira e aguarde a confirmação da leitura de verificação. Durante salvamento, importação e sincronização completa, a edição fica bloqueada.
+5. Abra um bloco na aba **Cadeia** para editar seus parâmetros, ou segure a alça de um card e arraste para mudar a ordem. Use **Presets** para navegar pelos slots, importar, exportar e compartilhar.
+6. Use **Salvar** para gravar na pedaleira e aguarde a confirmação da leitura de verificação. Para gravar em outro slot, segure **Salvar** e escolha o **Local do patch**. Durante salvamento, importação e sincronização completa, a edição fica bloqueada.
 
 Para conhecer a interface sem equipamento, toque em **Continuar sem conectar (Modo Offline)** na tela inicial. Quando não há preset em cache, o app cria um **Preset Inicial** com todos os blocos desligados, o primeiro modelo da lista de cada bloco selecionado e parâmetros no meio das respectivas faixas, ajustados aos passos disponíveis. Opções discretas usam a opção central inferior quando não existe um centro exato. Presets já armazenados não são substituídos por esse padrão.
 

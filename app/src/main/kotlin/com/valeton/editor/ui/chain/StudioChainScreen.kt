@@ -2,7 +2,10 @@ package com.valeton.editor.ui.chain
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -184,8 +188,22 @@ fun StudioChainScreen(
                             onClick = { onOpenSlot(slot.slotIndex) },
                             onMoveUp = if (index > 0) { { onMoveSlot(index, index - 1) } } else null,
                             onMoveDown = if (index < chain.size - 1) { { onMoveSlot(index, index + 1) } } else null,
-                            modifier = if (isDragging) Modifier.border(2.dp, StudioPalette.Accent, RoundedCornerShape(8.dp)) else Modifier,
+                            modifier = if (isDragging || drag.heldKey == slot.slotIndex) {
+                                Modifier.border(2.dp, StudioPalette.Accent, RoundedCornerShape(8.dp))
+                            } else Modifier,
                             dragHandle = if (!reorderEnabled) Modifier else Modifier.pointerInput(slot.slotIndex) {
+                                // Watch the press without consuming it, so the drag and the tap menu still get it.
+                                try {
+                                    awaitEachGesture {
+                                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                        drag.hold(slot.slotIndex)
+                                        waitForUpOrCancellation(pass = PointerEventPass.Initial)
+                                        drag.release(slot.slotIndex)
+                                    }
+                                } finally {
+                                    drag.release(slot.slotIndex)
+                                }
+                            }.pointerInput(slot.slotIndex) {
                                 // Cancelled when the lock removes this handle mid-drag; onDragCancel does not run then.
                                 try {
                                 detectDragGestures(
@@ -257,6 +275,9 @@ private class ChainDragState(private val listState: LazyListState) {
     var order by mutableStateOf<List<Int>?>(null)
         private set
     var draggingKey by mutableStateOf<Int?>(null)
+        private set
+    /** Card whose handle is pressed, before and during a drag; drives the highlight border (BL-06). */
+    var heldKey by mutableStateOf<Int?>(null)
         private set
     private var initialOffset = 0
     private var dragDelta by mutableFloatStateOf(0f)
@@ -334,7 +355,17 @@ private class ChainDragState(private val listState: LazyListState) {
     }
 
     /** Drops the drag without moving anything; with [key], only when that card is the one being dragged. */
+    fun hold(key: Int) {
+        heldKey = key
+    }
+
+    /** Clears the hold only for [key], so a late release from another card leaves the current one alone. */
+    fun release(key: Int) {
+        if (heldKey == key) heldKey = null
+    }
+
     fun cancel(key: Int? = null) {
+        if (key == null || key == heldKey) heldKey = null
         if (key != null && key != draggingKey) return
         order = null
         draggingKey = null
