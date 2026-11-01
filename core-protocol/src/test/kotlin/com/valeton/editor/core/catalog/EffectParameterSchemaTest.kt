@@ -15,7 +15,7 @@ class EffectParameterSchemaTest {
             val ids = fields[2].split(',').map(String::toInt)
             val names = fields[4].split('|').map { it.lowercase() }
             val reference = names.zip(ids).toMap()
-            val actual = model?.params?.associate { it.name.replace("&amp;", "&").lowercase() to it.index }
+            val actual = model?.params?.associate { it.name.lowercase() to it.index }
             if (actual != reference) "${fields[1]}/${model?.name}: expected $reference, got $actual" else null
         }
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))

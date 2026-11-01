@@ -2,7 +2,7 @@
 
 Editor independente de presets para pedaleiras Valeton GP-200, feito para Android com Kotlin, Jetpack Compose e Material 3. Conecte a pedaleira por USB MIDI para editar efeitos, organizar presets e controlar os ritmos pelo celular.
 
-**Versão atual do projeto: 1.0.8.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
+**Versão atual do projeto: 1.0.9.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
 
 O app não acessa a internet nem coleta dados pessoais; veja a [política de privacidade](docs/privacy-policy.md).
 
@@ -33,15 +33,21 @@ Este projeto não é um produto oficial da Valeton e não declara afiliação ou
     <td align="center"><img src="docs/images/edicao-opcoes.png" width="260" alt="Editor do amplificador Classic Bass com as cinco opções de Midrange visíveis abaixo do nome do parâmetro"><br><b>Opções legíveis</b><br>Opções que não cabem ao lado do nome passam para a linha de baixo.</td>
     <td align="center"><img src="docs/images/salvar-como.png" width="260" alt="Diálogo Configurações do patch com nome, autor, volume e local do patch"><br><b>Salvar em outro slot</b><br>Toque longo em Salvar para mudar nome, autor, volume e local do patch.</td>
   </tr>
+  <tr>
+    <td align="center"><img src="docs/images/descricao-efeito.png" width="260" alt="Diálogo do Tape Delay S com a arte do pedal, a categoria Delay e a descrição baseado em Roland RE-201 Space Echo"><br><b>Descrição do efeito</b><br>Toque no ícone ao lado do nome para ver a arte e a descrição completa.</td>
+    <td align="center"><img src="docs/images/nomes-completos.png" width="260" alt="Knobs do Tape Delay S com o rótulo Wow e Flutter em duas linhas"><br><b>Nomes completos</b><br>Rótulos longos dos knobs quebram em duas linhas em vez de serem cortados.</td>
+    <td align="center"><img src="docs/images/fonte-grande.png" width="260" alt="Cadeia de sinal com a fonte do sistema em 130 por cento e a aba Controles inteira na barra inferior"><br><b>Fonte grande</b><br>Com a fonte do sistema ampliada, textos e abas continuam inteiros.</td>
+  </tr>
 </table>
 
-As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As capturas de reordenação da cadeia, das opções do Classic Bass e do diálogo de salvar em outro slot são da versão 1.0.8, também no emulador offline; por isso o botão **Salvar na pedaleira** aparece desabilitado. As imagens não representam uma conexão MIDI ativa.
+As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As capturas de reordenação da cadeia, das opções do Classic Bass e do diálogo de salvar em outro slot são da versão 1.0.8, e as da descrição do efeito, dos nomes completos e da fonte grande (130%) são da versão 1.0.9, todas no emulador offline; por isso o botão **Salvar na pedaleira** aparece desabilitado. As imagens não representam uma conexão MIDI ativa.
 
 ## Recursos
 
 - **11 blocos de efeitos:** PRE, WAH, DST, AMP, NR, CAB, EQ, MOD, DLY, RVB e VOL, com ativação e edição. Para reordenar, segure a alça do card (ele fica destacado) e arraste; um toque rápido na alça abre o menu Mover para cima/baixo.
 - **FX Loop:** os marcadores FX Send e FX Return aparecem na cadeia e podem ser movidos com as setas, sempre com o Send antes do Return.
-- **Editor de parâmetros:** knobs respeitam faixa e passo do catálogo; opções de switches e seletores que não cabem ao lado do nome passam para a linha de baixo, sem cortar nenhuma.
+- **Editor de parâmetros:** knobs respeitam faixa e passo do catálogo; opções de switches e seletores que não cabem ao lado do nome passam para a linha de baixo, sem cortar nenhuma, e nomes longos de knobs quebram em duas linhas. O ícone ao lado do nome do efeito abre a arte do pedal e a descrição completa do modelo em que ele se baseia.
+- **Fontes grandes:** com a fonte do sistema ampliada, a tela inicial rola quando não cabe, os botões crescem com o texto e os rótulos da barra inferior diminuem para caber.
 - **Nomes de IR e SnapTone:** ao conectar, o app lê os nomes dos 20 User IRs e dos 10 SnapTones gravados na pedaleira e os mostra no seletor, na cadeia, no editor e nos controles. Os nomes ficam guardados para uso offline.
 - **Efeitos favoritos:** marque ou desmarque modelos pela estrela no seletor. A aba **Favoritos** aparece quando o bloco atual tem efeitos marcados e combina com a busca; os favoritos ficam salvos no app e são compartilhados entre patches, nos modos online e offline, sem serem alterados pela sincronização da pedaleira.
 - **Parâmetros do patch:** volume, Pan, tempo e Tap Tempo.

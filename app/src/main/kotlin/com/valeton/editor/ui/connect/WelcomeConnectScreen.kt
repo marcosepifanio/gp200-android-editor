@@ -4,6 +4,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,7 +53,7 @@ fun WelcomeConnectScreen(
         label = "pulseScale"
     )
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
             .background(
@@ -66,9 +68,12 @@ fun WelcomeConnectScreen(
             .systemBarsPadding()
             .padding(24.dp)
     ) {
+        // Scrolls only when large fonts make the content taller than the screen; otherwise it fills it as before.
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
                 .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
@@ -263,7 +268,7 @@ fun WelcomeConnectScreen(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .heightIn(min = 52.dp)
                     ) {
                         if (isConnecting) {
                             CircularProgressIndicator(
@@ -294,7 +299,8 @@ fun WelcomeConnectScreen(
                                 text = "Conectar Pedaleira",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = Color.White,
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -308,13 +314,14 @@ fun WelcomeConnectScreen(
                     border = androidx.compose.foundation.BorderStroke(1.dp, BorderDark),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .heightIn(min = 48.dp)
                 ) {
                     Text(
                         text = "Continuar sem conectar (Modo Offline)",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        color = TextSecondary
+                        color = TextSecondary,
+                        textAlign = TextAlign.Center
                     )
                 }
 

@@ -160,7 +160,9 @@ fun StudioKnob(
             color = StudioPalette.TextMuted,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
+            // Two lines so the longest catalog name ("Wow & Flutter") is not cut (BL-07).
+            maxLines = 2,
+            lineHeight = 14.sp,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )

@@ -1,4 +1,5 @@
 # GP-200 Windows 1.8.1 algorithm.xml factual schema: ID, module, ordered wire IDs, Sync>bound wire IDs, ordered names. Resolve Knob.bind to Power switch (source mixes idx/ID).
+# 184549409 Wow & Flutter: name truncated to "Wow &" in algorithm.xml; full name from GP-200 Online Manual, firmware 1.8.0.
 0	PRE	0,1	-	Sustain|Volume
 1	PRE	0,1,2,3	-	Sustain|Attack|Volume|Clipping
 3	PRE	0,1,2,3,4,5,6	-	Threshold|Ratio|Volume|Attack|Release|Tone|Blend
@@ -268,7 +269,7 @@
 16777262	MOD	0,1,2,3,4	-	Mix|Krush|Bit|Hi Cut|Lo Cut
 184549405	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Time R%|Spread|Level|Sync|Trail
 184549407	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Time R%|Spread|Level|Sync|Trail
-184549409	DLY	0,1,2,3,4,5,6,7,8,9,10,11	10>1	Mix|Time|Feedback|Time R%|Spread|Wow &|Age|Scrape|Drive|Level|Sync|Trail
+184549409	DLY	0,1,2,3,4,5,6,7,8,9,10,11	10>1	Mix|Time|Feedback|Time R%|Spread|Wow & Flutter|Age|Scrape|Drive|Level|Sync|Trail
 184549418	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Level|Mod|Tone|Sync|Trail
 184549422	DLY	0,1,2,3,4,5,6,7	6>1	Mix|Time|Feedback|Level|Mod|Tone|Sync|Trail
 184549376	DLY	0,1,2,3,4	3>1	Mix|Time|Feedback|Sync|Trail

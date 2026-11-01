@@ -1717,7 +1717,7 @@ object EffectCatalog {
             KnobParam("Feedback", 2, 20f, -100f, 100f, 1f),
             KnobParam("Time R%", 3, 61.8f, 1f, 100f, 1f),
             KnobParam("Spread", 4, 100f, -100f, 100f, 1f),
-            KnobParam("Wow &amp;", 5, 50f, 0f, 100f, 1f),
+            KnobParam("Wow & Flutter", 5, 50f, 0f, 100f, 1f),
             ComboBoxParam("Age", 6, 0f, listOf(OptionItem("Past", 0), OptionItem("Present", 1), OptionItem("Future", 2))),
             KnobParam("Scrape", 7, 100f, 0f, 100f, 1f),
             KnobParam("Drive", 8, 0f, 0f, 100f, 1f),

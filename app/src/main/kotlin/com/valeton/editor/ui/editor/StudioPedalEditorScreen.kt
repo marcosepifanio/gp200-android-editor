@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,6 +51,7 @@ fun StudioPedalEditorScreen(
     modifier: Modifier = Modifier
 ) {
     var showEffectPicker by remember { mutableStateOf(false) }
+    var showEffectInfo by remember(slot.effectId) { mutableStateOf(false) }
 
     val effectDef: EffectDefinition? = EffectCatalog.getEffectById(slot.effectId)
     val module = ModuleType.fromSlotIndex(slot.slotIndex)
@@ -210,16 +212,33 @@ fun StudioPedalEditorScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: "Bypass",
-                    color = StudioPalette.TextPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (!effectDef?.basedOn.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: "Bypass",
+                        color = StudioPalette.TextPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (infoAvailable(effectDef)) {
+                        // Small icon so the name line keeps its height; Compose widens the touch target to 48 dp.
+                        Icon(
+                            imageVector = Icons.Outlined.Info,
+                            contentDescription = "Ver descrição completa",
+                            tint = StudioPalette.TextSecondary,
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .clip(CircleShape)
+                                .clickable { showEffectInfo = true }
+                                .padding(2.dp)
+                                .size(18.dp)
+                        )
+                    }
+                }
+                if (infoAvailable(effectDef)) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "baseado em ${effectDef!!.basedOn}",
@@ -511,4 +530,15 @@ fun StudioPedalEditorScreen(
         },
         onDismiss = { showEffectPicker = false }
     )
+
+    if (showEffectInfo && effectDef != null) {
+        EffectInfoDialog(
+            name = effectDisplayName(effectDef, LocalUserModelNames.current),
+            basedOn = effectDef.basedOn,
+            category = effectDef.category,
+            svgFile = effectDef.svgFile,
+            accentColor = spec.bodyDeep,
+            onDismiss = { showEffectInfo = false }
+        )
+    }
 }

@@ -1,6 +1,8 @@
 package com.valeton.editor.core.catalog
 
+import com.valeton.editor.core.model.ComboBoxParam
 import com.valeton.editor.core.model.ModuleType
+import com.valeton.editor.core.model.SwitchParam
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -92,5 +94,23 @@ class EffectCatalogTest {
             listOf("Acoustic", "Boost", "Compressor", "Filter", "Overdrive", "Pitch", "Special"),
             preCategories
         )
+    }
+
+    @Test
+    fun `no catalog name contains an HTML entity`() {
+        val entity = Regex("&(amp|lt|gt|quot|apos|#\\d+);")
+        val texts = EffectCatalog.getAllEffects().flatMap { effect ->
+            val options = effect.params.flatMap { param ->
+                when (param) {
+                    is SwitchParam -> param.options.map { it.name }
+                    is ComboBoxParam -> param.options.map { it.name }
+                    else -> emptyList()
+                }
+            }
+            (listOf(effect.name, effect.basedOn, effect.category) + effect.params.map { it.name } + options)
+                .map { "${effect.name}: $it" }
+        }
+        val failures = texts.filter { entity.containsMatchIn(it) }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 }
