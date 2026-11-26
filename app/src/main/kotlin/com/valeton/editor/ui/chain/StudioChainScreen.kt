@@ -100,12 +100,12 @@ fun StudioChainScreen(
     ) {
             // 1. Header Information
             item {
-                Row(
+                // Título e dica empilhados: lado a lado, a dica encostava no título com fonte grande.
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
                         text = "CADEIA DE SINAL",
