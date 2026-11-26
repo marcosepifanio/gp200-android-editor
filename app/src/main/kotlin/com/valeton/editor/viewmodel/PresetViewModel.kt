@@ -51,8 +51,6 @@ class PresetViewModel(
     private var lastSavedTimestamp: Long = 0L
     /** Name a slot had before its first unsaved local rename, so "save as" can restore the source. */
     private var nameBeforeLocalRename: Pair<Int, String>? = null
-    /** Day of the last complete library sync; the first connection of a new day syncs again. */
-    private var lastFullSyncDate: LocalDate? = libraryRepository?.lastFullSyncDate()
     private val _uiState = MutableStateFlow(PresetUiState())
     val uiState: StateFlow<PresetUiState> = _uiState.asStateFlow()
 
@@ -165,12 +163,13 @@ class PresetViewModel(
         }
     }
 
-    /** Syncs on connection when the cache is incomplete or was not refreshed today; the cache stays visible meanwhile. */
+    /**
+     * Every connection syncs the whole library; the cache stays visible meanwhile. Pending local changes, a save or an
+     * import leave the sync for the next connection.
+     */
     private fun checkAndTriggerFullSync() {
         if (libraryRepository == null || _uiState.value.isImporting || _uiState.value.isSaving || _uiState.value.hasUnsavedChanges) return
         if (_uiState.value.isPerformingFullSync) return
-        val isFull = _uiState.value.cachedLibrary.size == 256 && _uiState.value.cachedLibrary.values.all { it.effects.isNotEmpty() }
-        if (isFull && lastFullSyncDate == today()) return
         _uiState.update { it.copy(isPerformingFullSync = true) }
         midiManager.startFullLibrarySync()
     }
@@ -255,7 +254,7 @@ class PresetViewModel(
             is PedalEvent.FullLibrarySynced -> {
                 val validPresets = event.presets.filter { (slot, preset) -> slot in 0..255 && preset.effects.isNotEmpty() }
                 val missingCount = 256 - validPresets.size
-                // A daily refresh starts from a full cache: slots that failed to read keep their cached copy.
+                // A refresh over a full cache: slots that failed to read keep their cached copy.
                 val library = _uiState.value.cachedLibrary + validPresets
                 _uiState.update { current ->
                     val names = (0..255).map { idx ->
@@ -275,7 +274,6 @@ class PresetViewModel(
                 scope.launch(ioDispatcher) { libraryRepository?.saveFullLibrary(library) }
                 if (missingCount == 0) {
                     val syncedOn = today()
-                    lastFullSyncDate = syncedOn
                     scope.launch(ioDispatcher) { libraryRepository?.markFullSync(syncedOn) }
                 }
             }
@@ -552,7 +550,6 @@ class PresetViewModel(
         if (_uiState.value.isSaving || _uiState.value.isImporting || _uiState.value.isPerformingFullSync) return
         // Offline there is no pedal to answer: keep the cache instead of clearing it and waiting forever.
         if (midiManager.connectionState.value !is MidiConnectionState.Connected) return
-        lastFullSyncDate = null
         _uiState.update {
             it.copy(
                 isPerformingFullSync = true,

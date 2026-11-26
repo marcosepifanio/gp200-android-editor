@@ -956,6 +956,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         assertEquals(256, viewModel.uiState.value.cachedLibrary.size)
 
         viewModel.forceFullLibraryResync()
@@ -1098,6 +1100,8 @@ class PresetViewModelTest {
 
         val viewModel = PresetViewModel(fakeMidi, libraryRepository = repository)
 
+        viewModel.finishConnectionSync(fakeMidi)
+
         viewModel.selectPresetSlot(-10)
         assertEquals(0, viewModel.uiState.value.currentSlotNumber)
         assertEquals(listOf(0), fakeMidi.presetChangesSent)
@@ -1161,6 +1165,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         viewModel.syncCurrentPatch()
         assertTrue(viewModel.uiState.value.isSyncingCurrentPreset)
 
@@ -1193,6 +1199,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         viewModel.midiDelayProvider = { }
 
         // Select slot 100 (26A)
@@ -1249,6 +1257,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         viewModel.midiDelayProvider = { }
 
         // Select slot 100 (26A)
@@ -1291,6 +1301,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         viewModel.midiDelayProvider = { }
 
         viewModel.selectPresetSlot(102)
@@ -1323,6 +1335,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         viewModel.midiDelayProvider = { }
 
         viewModel.selectPresetSlot(102)
@@ -1356,6 +1370,8 @@ class PresetViewModelTest {
             libraryRepository = repository,
             coroutineScope = CoroutineScope(Dispatchers.Unconfined)
         )
+
+        viewModel.finishConnectionSync(fakeMidi)
         viewModel.midiDelayProvider = { }
 
         viewModel.selectPresetSlot(102)
@@ -1849,6 +1865,8 @@ class PresetViewModelTest {
         val vm = PresetViewModel(midi, libraryRepository = repository, coroutineScope = backgroundScope)
         vm.midiDelayProvider = {}
         testScheduler.runCurrent()
+        vm.finishConnectionSync(midi)
+        testScheduler.runCurrent()
         vm.importPreset(createInitialPreset().copy(patchName = "Imported name"), 5, true)
         testScheduler.runCurrent()
         assertEquals("Imported name", vm.uiState.value.presetNames[5])
@@ -2055,6 +2073,12 @@ class PresetViewModelTest {
         assertTrue(midi.saves.isEmpty())
     }
 
+    /** Every connection syncs the library; finishes that sync so a test starts from a connected, synced state. */
+    private fun PresetViewModel.finishConnectionSync(midi: FakeMidiManager) {
+        handlePedalEvent(PedalEvent.FullLibrarySynced(uiState.value.cachedLibrary))
+        midi.fullSyncStarted = false
+    }
+
     private fun dailySyncViewModel(midi: FakeMidiManager, repository: PresetLibraryRepository, day: () -> LocalDate) =
         PresetViewModel(
             midi,
@@ -2079,7 +2103,7 @@ class PresetViewModelTest {
     }
 
     @Test
-    fun `connection on a day already synced does not sync again`() {
+    fun `connection syncs again even when the library was synced today`() {
         val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
         val repository = PresetLibraryRepository(tempDir)
         repository.saveFullLibrary(createDummyLibrary())
@@ -2088,8 +2112,9 @@ class PresetViewModelTest {
 
         midi._connectionState.value = MidiConnectionState.Connected("GP-200")
 
-        assertFalse(midi.fullSyncStarted)
-        assertFalse(vm.uiState.value.isPerformingFullSync)
+        assertTrue(midi.fullSyncStarted)
+        assertTrue(vm.uiState.value.isPerformingFullSync)
+        assertEquals(256, vm.uiState.value.cachedLibrary.size, "The cache stays visible during the sync")
     }
 
     @Test
@@ -2105,7 +2130,7 @@ class PresetViewModelTest {
     }
 
     @Test
-    fun `complete sync records the day so the next connection that day does not sync`() {
+    fun `complete sync records the day and every new connection syncs again`() {
         val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
         val repository = PresetLibraryRepository(tempDir)
         repository.saveFullLibrary(createDummyLibrary())
@@ -2120,7 +2145,21 @@ class PresetViewModelTest {
         midi.fullSyncStarted = false
         midi._connectionState.value = MidiConnectionState.Disconnected
         midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+        assertTrue(midi.fullSyncStarted)
+    }
+
+    @Test
+    fun `connection with unsaved local changes waits for the next connection`() {
+        val midi = FakeMidiManager().apply { _connectionState.value = MidiConnectionState.Disconnected }
+        val repository = PresetLibraryRepository(tempDir)
+        repository.saveFullLibrary(createDummyLibrary())
+        val vm = dailySyncViewModel(midi, repository) { LocalDate.of(2026, 10, 30) }
+        vm.renamePatch("Pendente")
+
+        midi._connectionState.value = MidiConnectionState.Connected("GP-200")
+
         assertFalse(midi.fullSyncStarted)
+        assertFalse(vm.uiState.value.isPerformingFullSync)
     }
 
     @Test
