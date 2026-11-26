@@ -107,24 +107,11 @@ fun StudioHeader(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Sub-line: [Dot] [SlotLabel] · PATCH    [✎]
+                    // Sub-line: [SlotLabel] · [USB/OFFLINE]    [✎]
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Connection Status Dot
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (connected) StudioPalette.Accent.copy(alpha = dotAlpha)
-                                    else StudioPalette.AccentRed
-                                )
-                        )
-
-                        Spacer(modifier = Modifier.width(5.dp))
-
                         // Slot Badge e.g. 01-A
                         Text(
                             text = slotLabel,
@@ -138,32 +125,40 @@ fun StudioHeader(
                             )
                         )
 
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
 
-                        Text(
-                            text = "·",
-                            color = StudioPalette.TextMuted,
-                            fontSize = 12.sp,
-                            style = LocalTextStyle.current.copy(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                lineHeight = 12.sp
+                        if (connected) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(StudioPalette.AccentGreen.copy(alpha = dotAlpha))
                             )
-                        )
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        Text(
-                            text = "PRESET",
-                            color = StudioPalette.TextMuted,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            fontFamily = FontFamily.Monospace,
-                            letterSpacing = 0.5.sp,
-                            style = LocalTextStyle.current.copy(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false),
-                                lineHeight = 12.sp
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "USB",
+                                color = StudioPalette.AccentGreen,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                style = LocalTextStyle.current.copy(
+                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                    lineHeight = 12.sp
+                                )
                             )
-                        )
+                        } else {
+                            Text(
+                                text = "OFFLINE",
+                                color = StudioPalette.TextMuted,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = FontFamily.Monospace,
+                                style = LocalTextStyle.current.copy(
+                                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                                    lineHeight = 12.sp
+                                )
+                            )
+                        }
 
                         Spacer(modifier = Modifier.weight(1f))
 
@@ -180,9 +175,8 @@ fun StudioHeader(
                     Text(
                         text = patchName.ifBlank { "Sem nome" },
                         color = StudioPalette.TextPrimary,
-                        fontSize = 14.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = LocalTextStyle.current.copy(
@@ -197,7 +191,8 @@ fun StudioHeader(
             if (onImportClick != null) {
                 Box(
                     modifier = Modifier
-                        .size(width = 38.dp, height = 50.dp)
+                        .sizeIn(minWidth = 48.dp, minHeight = 50.dp)
+                        .height(50.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(StudioPalette.Surface)
                         .border(1.dp, StudioPalette.Border, RoundedCornerShape(8.dp))
@@ -224,7 +219,7 @@ fun StudioHeader(
                     )
                     .border(1.dp, saveBtnBorder, RoundedCornerShape(8.dp))
                     .combinedClickable(enabled = !saving, onClick = onSaveClick, onLongClick = onSaveLongClick)
-                    .padding(horizontal = 10.dp),
+                    .padding(horizontal = 12.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -235,14 +230,13 @@ fun StudioHeader(
                                 .clip(CircleShape)
                                 .background(StudioPalette.Accent)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(5.dp))
                     }
                     Text(
                         text = if (saving) "SALVANDO…" else "SALVAR",
                         color = saveBtnText,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
                         letterSpacing = 0.5.sp
                     )
                 }

@@ -3,19 +3,24 @@ package com.valeton.editor.ui.about
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,28 +73,57 @@ fun StudioAboutScreen(modifier: Modifier = Modifier) {
             Text("CRÉDITOS", color = StudioPalette.TextPrimary, fontWeight = FontWeight.Bold)
             Text("Artes e trabalhos anteriores que contribuíram para este editor independente:",
                 color = StudioPalette.TextSecondary)
-            TextButton(onClick = { uriHandler.openUri("https://github.com/kabir0st/gp200-studio") }) {
-                Text("GP200 Studio · Kabir Tamari", color = StudioPalette.Accent)
+            AboutLinkRow("GP200 Studio · Kabir Tamari") {
+                uriHandler.openUri("https://github.com/kabir0st/gp200-studio")
             }
-            TextButton(onClick = { uriHandler.openUri("https://github.com/phash/gp200editor") }) {
-                Text("gp200editor / Preset Forge · phash", color = StudioPalette.Accent)
+            AboutLinkRow("gp200editor / Preset Forge · phash") {
+                uriHandler.openUri("https://github.com/phash/gp200editor")
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("CÓDIGO E LICENÇAS", color = StudioPalette.TextPrimary, fontWeight = FontWeight.Bold)
             Text("Código próprio sob GNU GPL versão 3. Fornecido sem garantia. Os componentes de terceiros mantêm seus avisos e condições de licença.",
                 color = StudioPalette.TextSecondary)
-            TextButton(onClick = { uriHandler.openUri("https://github.com/marcosepifanio/gp200-android-editor") }) {
-                Text("Código-fonte, créditos e licenças", color = StudioPalette.Accent)
+            AboutLinkRow("Código-fonte, créditos e licenças") {
+                uriHandler.openUri("https://github.com/marcosepifanio/gp200-android-editor")
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("PRIVACIDADE", color = StudioPalette.TextPrimary, fontWeight = FontWeight.Bold)
             Text("O app não acessa a internet nem coleta dados pessoais. Presets e preferências ficam somente neste aparelho.",
                 color = StudioPalette.TextSecondary)
-            TextButton(onClick = { uriHandler.openUri(PRIVACY_POLICY_URL) }) {
-                Text("Política de privacidade", color = StudioPalette.Accent)
+            AboutLinkRow("Política de privacidade") {
+                uriHandler.openUri(PRIVACY_POLICY_URL)
             }
+        }
+    }
+}
+
+@Composable
+private fun AboutLinkRow(label: String, onClick: () -> Unit) {
+    Surface(
+        color = StudioPalette.Surface,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, StudioPalette.BorderSubtle),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(onClick = onClick)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(label, color = StudioPalette.Accent, fontWeight = FontWeight.Medium)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = null,
+                tint = StudioPalette.Accent,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

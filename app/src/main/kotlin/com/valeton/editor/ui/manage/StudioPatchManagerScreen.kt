@@ -110,10 +110,9 @@ fun StudioPatchManagerScreen(
             Text(
                 text = "PRESETS",
                 color = StudioPalette.TextPrimary,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
-                letterSpacing = 1.sp
+                letterSpacing = 0.8.sp
             )
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (onResyncAllClick != null) {
@@ -155,10 +154,11 @@ fun StudioPatchManagerScreen(
             onValueChange = { searchQuery = it },
             placeholder = {
                 Text(
-                    text = "Buscar preset ou banco (ex.: 01-A, lead)...",
+                    text = "Buscar preset ou banco...",
                     color = StudioPalette.TextMuted,
-                    fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             },
             leadingIcon = {
@@ -166,7 +166,7 @@ fun StudioPatchManagerScreen(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Buscar",
                     tint = StudioPalette.TextMuted,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             },
             trailingIcon = {
@@ -176,7 +176,7 @@ fun StudioPatchManagerScreen(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Limpar busca",
                             tint = StudioPalette.TextMuted,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
@@ -193,7 +193,7 @@ fun StudioPatchManagerScreen(
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .heightIn(min = 52.dp)
         )
 
         // 2. Sync Progress Notice
@@ -282,9 +282,8 @@ fun StudioPatchManagerScreen(
                     Text(
                         text = item.name,
                         color = if (isSelected) StudioPalette.TextPrimary else StudioPalette.TextSecondary,
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        fontFamily = FontFamily.Monospace,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
@@ -341,16 +340,7 @@ fun StudioPatchManagerScreen(
             }
 
             item {
-                Text(
-                    text = "Valeton GP-200 Editor v${BuildConfig.VERSION_NAME}",
-                    color = StudioPalette.TextMuted,
-                    fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp)
-                )
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }

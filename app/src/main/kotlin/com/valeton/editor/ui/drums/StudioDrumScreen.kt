@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -223,22 +225,6 @@ fun StudioDrumScreen(
                     }
                 }
 
-                // Tempo Header Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "TEMPO · BPM DO RITMO",
-                        color = StudioPalette.TextSecondary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        letterSpacing = 0.5.sp
-                    )
-                }
-
                 // Integrated Tempo Control
                 StudioTempoControl(
                     tempo = tempo,
@@ -257,8 +243,7 @@ fun StudioDrumScreen(
                 Text(
                     text = "Buscar ritmo ou compasso...",
                     color = StudioPalette.TextMuted,
-                    fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace
+                    fontSize = 13.sp
                 )
             },
             leadingIcon = {
@@ -297,7 +282,7 @@ fun StudioDrumScreen(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
+                .heightIn(min = 52.dp)
         )
 
         // 3. Genre Filter Rail
@@ -414,7 +399,6 @@ fun StudioDrumScreen(
                                 color = if (isSelected) StudioPalette.TextPrimary else StudioPalette.TextSecondary,
                                 fontSize = 14.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                fontFamily = FontFamily.Monospace,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -525,7 +509,7 @@ private fun VolumeBar(
         }
 
         // Slider Track (0..100)
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)
                 .heightIn(min = 48.dp)
@@ -549,16 +533,17 @@ private fun VolumeBar(
                     )
                 }
         ) {
-            if (fraction > 0f) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(12.dp)
-                        .align(Alignment.CenterStart)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(StudioPalette.SurfaceRaised)
-                        .border(1.dp, StudioPalette.Border, RoundedCornerShape(4.dp))
-                ) {
+            val thumbSize = 16.dp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(12.dp)
+                    .align(Alignment.CenterStart)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(StudioPalette.SurfaceRaised)
+                    .border(1.dp, StudioPalette.Border, RoundedCornerShape(4.dp))
+            ) {
+                if (fraction > 0f) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(fraction)
@@ -566,17 +551,16 @@ private fun VolumeBar(
                             .background(Brush.horizontalGradient(listOf(StudioPalette.AccentDim, StudioPalette.Accent)))
                     )
                 }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(12.dp)
-                        .align(Alignment.CenterStart)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(StudioPalette.SurfaceRaised)
-                        .border(1.dp, StudioPalette.Border, RoundedCornerShape(4.dp))
-                )
             }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = (maxWidth - thumbSize) * fraction)
+                    .size(thumbSize)
+                    .clip(CircleShape)
+                    .background(StudioPalette.TextPrimary)
+                    .border(2.dp, StudioPalette.Accent, CircleShape)
+            )
         }
 
         // Step Up (48dp touch target)

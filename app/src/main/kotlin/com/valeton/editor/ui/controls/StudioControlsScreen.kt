@@ -7,6 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -84,7 +86,7 @@ fun StudioControlsScreen(
                         "DESTINO",
                         modifier = Modifier.weight(1.05f),
                         color = StudioPalette.TextMuted,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.5.sp,
                         maxLines = 1
@@ -93,7 +95,7 @@ fun StudioControlsScreen(
                         "PARÂMETRO",
                         modifier = Modifier.weight(0.95f),
                         color = StudioPalette.TextMuted,
-                        fontSize = 10.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 0.5.sp,
                         maxLines = 1
@@ -292,7 +294,12 @@ private fun MappingSelect(
                     maxLines = if (compact) 1 else Int.MAX_VALUE,
                     overflow = if (compact) TextOverflow.Ellipsis else TextOverflow.Clip
                 )
-                Text("▾", color = StudioPalette.Accent, modifier = Modifier.padding(start = 4.dp))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = StudioPalette.Accent,
+                    modifier = Modifier.padding(start = 4.dp).size(18.dp)
+                )
             }
             DropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }, modifier = Modifier.heightIn(max = 320.dp)) {
                 options.forEach { option ->

@@ -158,7 +158,7 @@ fun StudioPedalEditorScreen(
                     onClick = { previousEffectId?.let(onChangeEffect) },
                     enabled = previousEffectId != null,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(StudioPalette.AccentGlow)
                         .border(1.dp, StudioPalette.Accent.copy(alpha = 0.7f), CircleShape)
@@ -182,7 +182,7 @@ fun StudioPedalEditorScreen(
                     onClick = { nextEffectId?.let(onChangeEffect) },
                     enabled = nextEffectId != null,
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(StudioPalette.AccentGlow)
                         .border(1.dp, StudioPalette.Accent.copy(alpha = 0.7f), CircleShape)
@@ -199,14 +199,13 @@ fun StudioPedalEditorScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // 3. Identity Card [Name + based on ... | SWAP]
+        // 3. Identity Card [Name + info + based on ... | TROCAR]
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
                 .background(StudioPalette.SurfaceRaised)
                 .border(1.dp, StudioPalette.Border, RoundedCornerShape(8.dp))
-                .clickable { showEffectPicker = true }
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -216,35 +215,31 @@ fun StudioPedalEditorScreen(
                     Text(
                         text = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: "Bypass",
                         color = StudioPalette.TextPrimary,
-                        fontSize = 16.sp,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     if (infoAvailable(effectDef)) {
-                        // Small icon so the name line keeps its height; Compose widens the touch target to 48 dp.
-                        Icon(
-                            imageVector = Icons.Outlined.Info,
-                            contentDescription = "Ver descrição completa",
-                            tint = StudioPalette.TextSecondary,
-                            modifier = Modifier
-                                .padding(start = 8.dp)
-                                .clip(CircleShape)
-                                .clickable { showEffectInfo = true }
-                                .padding(2.dp)
-                                .size(18.dp)
-                        )
+                        IconButton(
+                            onClick = { showEffectInfo = true },
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Info,
+                                contentDescription = "Ver descrição completa",
+                                tint = StudioPalette.Accent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
                 if (infoAvailable(effectDef)) {
-                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = "baseado em ${effectDef!!.basedOn}",
                         color = StudioPalette.TextSecondary,
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontSize = 13.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -275,17 +270,19 @@ fun StudioPedalEditorScreen(
             // SWAP Button Pill
             Box(
                 modifier = Modifier
+                    .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(StudioPalette.AccentGlow)
                     .border(1.dp, StudioPalette.Accent, RoundedCornerShape(6.dp))
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .clickable { showEffectPicker = true }
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "TROCAR",
                     color = StudioPalette.Accent,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
                     letterSpacing = 0.5.sp
                 )
             }
@@ -335,7 +332,8 @@ fun StudioPedalEditorScreen(
                                             focusedParamIndex = param.index
                                             onParamChange(param.index, newValue)
                                         },
-                                        accentColor = if (focusedParamIndex == param.index) StudioPalette.Accent else spec.bodyDeep
+                                        accentColor = if (focusedParamIndex == param.index) StudioPalette.Accent else spec.bodyDeep,
+                                        focused = focusedParamIndex == param.index
                                     )
                                 }
                             }

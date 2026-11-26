@@ -205,6 +205,7 @@ fun StudioTempoControl(
                             }
                         }
                 ) {
+                    val thumbSize = 16.dp
                     val fillWidth = maxWidth * fraction
                     Box(
                         modifier = Modifier
@@ -222,6 +223,15 @@ fun StudioTempoControl(
                                 .background(Brush.horizontalGradient(listOf(StudioPalette.AccentDim, StudioPalette.Accent)))
                         )
                     }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .offset(x = (maxWidth - thumbSize) * fraction)
+                            .size(thumbSize)
+                            .clip(CircleShape)
+                            .background(StudioPalette.TextPrimary)
+                            .border(2.dp, StudioPalette.Accent, CircleShape)
+                    )
                 }
 
                 // Step Up

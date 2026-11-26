@@ -81,7 +81,7 @@ fun WelcomeConnectScreen(
             // Header / Branding
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 8.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -95,11 +95,11 @@ fun WelcomeConnectScreen(
                         color = ValetonBlue,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 3.sp
+                        letterSpacing = 2.sp
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = "GP-200",
@@ -246,7 +246,10 @@ fun WelcomeConnectScreen(
                     // Enter Editor button when connected
                     Button(
                         onClick = onProceedOfflineClick,
-                        colors = ButtonDefaults.buttonColors(containerColor = ValetonBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ValetonBlue,
+                            contentColor = StudioPalette.Case
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -256,7 +259,7 @@ fun WelcomeConnectScreen(
                             text = "Entrar no Editor",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = StudioPalette.Case
                         )
                     }
                 } else {
@@ -264,7 +267,12 @@ fun WelcomeConnectScreen(
                     Button(
                         onClick = onConnectClick,
                         enabled = !isConnecting,
-                        colors = ButtonDefaults.buttonColors(containerColor = ValetonBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ValetonBlue,
+                            contentColor = StudioPalette.Case,
+                            disabledContainerColor = ValetonBlue.copy(alpha = 0.6f),
+                            disabledContentColor = StudioPalette.Case
+                        ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -273,7 +281,7 @@ fun WelcomeConnectScreen(
                         if (isConnecting) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-                                color = Color.White,
+                                color = StudioPalette.Case,
                                 strokeWidth = 2.dp
                             )
                             Spacer(modifier = Modifier.width(10.dp))
@@ -285,13 +293,13 @@ fun WelcomeConnectScreen(
                                 },
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = StudioPalette.Case
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Usb,
                                 contentDescription = "Conectar",
-                                tint = Color.White,
+                                tint = StudioPalette.Case,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -299,7 +307,7 @@ fun WelcomeConnectScreen(
                                 text = "Conectar Pedaleira",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
+                                color = StudioPalette.Case,
                                 textAlign = TextAlign.Center
                             )
                         }

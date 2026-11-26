@@ -110,17 +110,15 @@ fun StudioChainScreen(
                     Text(
                         text = "CADEIA DE SINAL",
                         color = StudioPalette.TextPrimary,
-                        fontSize = 12.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Monospace,
-                        letterSpacing = 1.sp
+                        letterSpacing = 0.8.sp
                     )
                     Text(
-                        text = "Toque para editar",
+                        text = "Toque para editar · Segure ⋮⋮ para mover",
                         color = StudioPalette.TextMuted,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = FontFamily.Monospace
+                        fontWeight = FontWeight.Medium
                     )
                 }
                 Spacer(modifier = Modifier.height(6.dp))

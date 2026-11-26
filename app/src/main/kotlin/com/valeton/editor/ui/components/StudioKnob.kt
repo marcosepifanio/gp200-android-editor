@@ -1,12 +1,16 @@
 package com.valeton.editor.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -33,7 +37,8 @@ fun StudioKnob(
     onValueChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
     displayValue: String? = null,
-    accentColor: Color = StudioPalette.Accent
+    accentColor: Color = StudioPalette.Accent,
+    focused: Boolean = false
 ) {
     val fraction = remember(value, min, max) {
         if (max > min) ((value - min) / (max - min)).coerceIn(0f, 1f) else 0f
@@ -41,7 +46,15 @@ fun StudioKnob(
 
     Column(
         modifier = modifier
-            .width(72.dp)
+            .width(76.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (focused) StudioPalette.SurfaceRaised else Color.Transparent)
+            .border(
+                width = 1.dp,
+                color = if (focused) StudioPalette.Accent.copy(alpha = 0.45f) else Color.Transparent,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(vertical = 4.dp, horizontal = 2.dp)
             .pointerInput(min, max, value) {
                 var accumulatedDelta = 0f
                 detectVerticalDragGestures(
@@ -147,7 +160,7 @@ fun StudioKnob(
         // Formatted Value Display
         Text(
             text = displayValue ?: if (max <= 10f) String.format("%.1f", value) else value.toInt().toString(),
-            color = StudioPalette.TextPrimary,
+            color = if (focused) StudioPalette.Accent else StudioPalette.TextPrimary,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace,
@@ -157,12 +170,12 @@ fun StudioKnob(
         // Parameter Name Label
         Text(
             text = name.uppercase(),
-            color = StudioPalette.TextMuted,
-            fontSize = 12.sp,
+            color = if (focused) StudioPalette.TextPrimary else StudioPalette.TextMuted,
+            fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             // Two lines so the longest catalog name ("Wow & Flutter") is not cut (BL-07).
             maxLines = 2,
-            lineHeight = 14.sp,
+            lineHeight = 13.sp,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center
         )

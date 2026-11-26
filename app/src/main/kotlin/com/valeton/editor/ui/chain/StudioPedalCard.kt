@@ -16,8 +16,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,9 +24,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,8 +82,8 @@ fun StudioPedalCard(
             .clip(RoundedCornerShape(8.dp))
             .background(cardBg)
             .border(
-                width = 1.dp,
-                color = if (slot.enabled) spec.bodyDeep.copy(alpha = 0.8f) else StudioPalette.Border,
+                width = if (slot.enabled) 1.5.dp else 1.dp,
+                color = if (slot.enabled) spec.led.copy(alpha = 0.65f) else StudioPalette.Border,
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable(onClick = onClick)
@@ -121,7 +123,8 @@ fun StudioPedalCard(
                 .size(48.dp, 36.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(Color.Black.copy(alpha = 0.15f))
-                .padding(2.dp),
+                .padding(2.dp)
+                .alpha(if (slot.enabled) 1f else 0.55f),
             contentAlignment = Alignment.Center
         ) {
             PedalArtwork(
@@ -141,9 +144,8 @@ fun StudioPedalCard(
             Text(
                 text = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: "Bypass",
                 color = textColor,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -161,7 +163,7 @@ fun StudioPedalCard(
                     Text(
                         text = module.code,
                         color = spec.led,
-                fontSize = 12.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
@@ -183,36 +185,52 @@ fun StudioPedalCard(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // 4. Status LED
-        Box(
+        // 4. Unified Bypass Toggle Pill (Integrated LED + State)
+        val effectLabel = effectDef?.let { effectDisplayName(it, LocalUserModelNames.current) } ?: module.code
+        Row(
             modifier = Modifier
-                .size(12.dp)
-                .clip(CircleShape)
-                .background(ledColor.copy(alpha = if (slot.enabled) 0.35f else 0.1f)),
-            contentAlignment = Alignment.Center
+                .sizeIn(minWidth = 64.dp, minHeight = 48.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (slot.enabled) spec.led.copy(alpha = 0.14f)
+                    else StudioPalette.SurfaceElevated.copy(alpha = 0.65f)
+                )
+                .border(
+                    width = 1.dp,
+                    color = if (slot.enabled) spec.led.copy(alpha = 0.55f) else StudioPalette.Border,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .clickable(role = Role.Switch, onClick = onToggle)
+                .semantics {
+                    contentDescription = if (slot.enabled) "Desativar $effectLabel" else "Ativar $effectLabel"
+                }
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(10.dp)
                     .clip(CircleShape)
-                    .background(ledColor)
+                    .background(ledColor.copy(alpha = if (slot.enabled) 0.35f else 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(ledColor)
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = if (slot.enabled) "ON" else "OFF",
+                color = if (slot.enabled) StudioPalette.TextPrimary else StudioPalette.TextMuted,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace
             )
         }
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // 5. Bypass Switch
-        Switch(
-            checked = slot.enabled,
-            onCheckedChange = { onToggle() },
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = StudioPalette.Accent,
-                checkedTrackColor = StudioPalette.AccentGlow,
-                uncheckedThumbColor = StudioPalette.TextMuted,
-                uncheckedTrackColor = StudioPalette.BorderSubtle
-            ),
-            modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-        )
     }
 }
 
