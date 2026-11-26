@@ -6,11 +6,14 @@ import androidx.lifecycle.viewModelScope
 import com.valeton.editor.core.codec.SysExCodec
 import com.valeton.editor.core.codec.PresetSaveVerifier
 import com.valeton.editor.core.catalog.EffectCatalog
+import com.valeton.editor.core.model.ComboBoxParam
 import com.valeton.editor.core.model.DrumGenre
 import com.valeton.editor.core.model.EffectSlot
 import com.valeton.editor.core.model.GP200Preset
 import com.valeton.editor.core.model.QuickKnobAssignment
 import com.valeton.editor.core.model.KnobParam
+import com.valeton.editor.core.model.ModuleType
+import com.valeton.editor.core.model.SwitchParam
 import kotlin.math.roundToInt
 import com.valeton.editor.repository.PresetLibraryRepository
 import com.valeton.editor.repository.UserModelNamesRepository
@@ -686,6 +689,46 @@ class PresetViewModel(
         val (updated, invalidKnobs) = presetAfterEffectChange(preset, slotIndex, newEffectId)
         _uiState.update { it.copy(preset = updated, hasUnsavedChanges = true) }
         midiManager.sendEffectChange(slotIndex, newEffectId)
+        invalidateDeviceKnobs(invalidKnobs)
+    }
+
+    /** Applies a saved block preset (model + catalog-validated parameters) to [slotIndex]. */
+    fun applyBlockPreset(slotIndex: Int, effectId: Int, params: List<Float>) {
+        if (controlsBusy()) return
+        val preset = _uiState.value.preset ?: return
+        val current = preset.effects.find { it.slotIndex == slotIndex } ?: return
+        if (EffectCatalog.getEffectById(effectId)?.module != ModuleType.fromSlotIndex(slotIndex)) return
+        val modelChanges = current.effectId != effectId
+        val (base, invalidKnobs) = if (modelChanges) presetAfterEffectChange(preset, slotIndex, effectId) else preset to emptyList()
+        val catalog = EffectCatalog.getEffectById(effectId)?.params.orEmpty()
+        val values = (base.effects.single { it.slotIndex == slotIndex }.params).toMutableList()
+        val sent = mutableListOf<Pair<Int, Float>>()
+        catalog.forEach { p ->
+            val raw = params.getOrNull(p.index)?.takeIf { it.isFinite() } ?: return@forEach
+            if (p.index !in values.indices) return@forEach
+            val v = when (p) {
+                is KnobParam -> {
+                    val bounded = raw.coerceIn(p.min, p.max)
+                    if (p.step > 0f) (p.min + ((bounded - p.min) / p.step).roundToInt() * p.step).coerceIn(p.min, p.max) else bounded
+                }
+                is SwitchParam -> raw.roundToInt().takeIf { id -> p.options.any { it.id == id } }?.toFloat()
+                is ComboBoxParam -> raw.roundToInt().takeIf { id -> p.options.any { it.id == id } }?.toFloat()
+                else -> raw
+            } ?: run {
+                if (modelChanges) sent += p.index to values[p.index]
+                return@forEach
+            }
+            values[p.index] = v
+            sent += p.index to v
+        }
+        _uiState.update {
+            it.copy(
+                preset = base.copy(effects = base.effects.map { slot -> if (slot.slotIndex == slotIndex) slot.copy(params = values) else slot }),
+                hasUnsavedChanges = true
+            )
+        }
+        if (modelChanges) midiManager.sendEffectChange(slotIndex, effectId)
+        sent.forEach { (index, value) -> midiManager.sendParamChange(slotIndex, index, effectId, value) }
         invalidateDeviceKnobs(invalidKnobs)
     }
 

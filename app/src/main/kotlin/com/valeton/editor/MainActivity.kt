@@ -367,7 +367,15 @@ class MainActivity : ComponentActivity() {
                                                         paramIndex,
                                                         value
                                                     )
-                                                }
+                                                },
+                                                onApplyBlockPreset = { effectId, params ->
+                                                    presetViewModel.applyBlockPreset(
+                                                        activeEditingSlot.slotIndex,
+                                                        effectId,
+                                                        params
+                                                    )
+                                                },
+                                                busy = uiState.isSaving || uiState.isImporting || uiState.isPerformingFullSync || uiState.isSyncingCurrentPreset
                                             )
                                         } else {
                                             StudioChainScreen(

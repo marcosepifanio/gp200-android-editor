@@ -2176,4 +2176,157 @@ class PresetViewModelTest {
         vm.moveFxLoopSend(9)
         assertEquals(7, vm.uiState.value.preset?.fxLoopSend, "A move that widens the inversion is refused")
     }
+
+    private fun tunedAmpPreset(knob0: com.valeton.editor.core.model.QuickKnobAssignment): GP200Preset {
+        val params = MutableList(15) { 0f }.apply { this[0] = 80f; this[5] = 30f }
+        val slots = (0..10).map { i ->
+            if (i == 3) EffectSlot(3, 117440554, true, params) else EffectSlot(i, 0, true)
+        }
+        val off = com.valeton.editor.core.model.CtrlAssignment(0, 0, 0L)
+        return GP200Preset(
+            patchName = "Tuned", effects = slots, routingOrder = (0..10).toList(),
+            controlMappings = com.valeton.editor.core.model.ControlMappings(
+                knobs = listOf(
+                    knob0,
+                    com.valeton.editor.core.model.QuickKnobAssignment(8, 1),
+                    com.valeton.editor.core.model.QuickKnobAssignment(255, 255)
+                ),
+                ctrls = List(8) { off }
+            )
+        )
+    }
+
+    private fun p15(vararg v: Float) = List(15) { i -> v.getOrElse(i) { 0f } }
+
+    @Test
+    fun `applyBlockPreset no mesmo modelo envia so os parametros`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        vm.loadPreset(tunedAmpPreset(com.valeton.editor.core.model.QuickKnobAssignment(3, 5)))
+
+        vm.applyBlockPreset(3, 117440554, p15(10f, 20f, 30f, 40f, 50f, 60f))
+
+        val slot = vm.uiState.value.preset!!.effects.single { it.slotIndex == 3 }
+        assertEquals(117440554, slot.effectId)
+        assertEquals(listOf(10f, 20f, 30f, 40f, 50f, 60f), slot.params.take(6))
+        assertTrue(slot.enabled)
+        assertTrue(midi.effectChanges.isEmpty())
+        assertEquals(6, midi.params.size)
+        assertTrue(midi.params.contains(listOf(3, 5, 117440554, 60f)))
+        assertTrue(vm.uiState.value.hasUnsavedChanges)
+    }
+
+    @Test
+    fun `applyBlockPreset de outro modelo troca e desliga knob sem o parametro`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        vm.loadPreset(tunedAmpPreset(com.valeton.editor.core.model.QuickKnobAssignment(3, 5)))
+
+        vm.applyBlockPreset(3, 117440513, p15(70f, 60f, 50f))
+
+        val state = vm.uiState.value
+        val slot = state.preset!!.effects.single { it.slotIndex == 3 }
+        assertEquals(117440513, slot.effectId)
+        assertEquals(listOf(70f, 60f, 50f), slot.params.take(3))
+        assertEquals(3 to 117440513, midi.effectChanges.single())
+        assertEquals(com.valeton.editor.core.model.QuickKnobAssignment.OFF, state.preset!!.controlMappings!!.knobs[0])
+        assertEquals(0 to com.valeton.editor.core.model.QuickKnobAssignment.OFF, midi.quickAssignments.single())
+        assertNotNull(state.errorMessage)
+    }
+
+    @Test
+    fun `applyBlockPreset limita valores ao catalogo`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        vm.loadPreset(tunedAmpPreset(com.valeton.editor.core.model.QuickKnobAssignment.OFF))
+
+        vm.applyBlockPreset(3, 117440554, p15(250f, -9f, 44.6f))
+
+        val slot = vm.uiState.value.preset!!.effects.single { it.slotIndex == 3 }
+        assertEquals(listOf(100f, 0f, 45f), slot.params.take(3))
+    }
+
+    @Test
+    fun `applyBlockPreset bloqueado durante salvamento`() = kotlinx.coroutines.test.runTest {
+        val midi = FakeMidiManager().apply {
+            saveHandler = { _, _ -> kotlinx.coroutines.delay(3000); null }
+        }
+        val vm = PresetViewModel(midi, coroutineScope = backgroundScope)
+        val preset = tunedAmpPreset(com.valeton.editor.core.model.QuickKnobAssignment.OFF)
+        vm.loadPreset(preset)
+        vm.renamePatch("Pending")
+        vm.saveToDevice()
+        testScheduler.runCurrent()
+        assertTrue(vm.uiState.value.isSaving)
+        val sentBefore = midi.params.size
+
+        vm.applyBlockPreset(3, 117440513, p15(70f))
+
+        assertEquals(117440554, vm.uiState.value.preset!!.effects.single { it.slotIndex == 3 }.effectId)
+        assertEquals(sentBefore, midi.params.size)
+        assertTrue(midi.effectChanges.isEmpty())
+        testScheduler.advanceTimeBy(5000)
+    }
+
+    @Test
+    fun `applyBlockPreset ignora modelo de outro tipo de bloco ou desconhecido`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        vm.loadPreset(tunedAmpPreset(com.valeton.editor.core.model.QuickKnobAssignment.OFF))
+        val before = vm.uiState.value.preset
+
+        val dly = com.valeton.editor.core.catalog.EffectCatalog.getEffectsByModule(com.valeton.editor.core.model.ModuleType.DLY).first().effectId
+        vm.applyBlockPreset(3, dly, p15(10f))
+        vm.applyBlockPreset(3, 999999, p15(10f))
+
+        assertEquals(before, vm.uiState.value.preset)
+        assertTrue(midi.effectChanges.isEmpty())
+        assertTrue(midi.params.isEmpty())
+    }
+
+    @Test
+    fun `applyBlockPreset ignora opcao inexistente de chave ou lista`() {
+        val def = com.valeton.editor.core.catalog.EffectCatalog.getAllEffects().first { d ->
+            d.params.any { it is com.valeton.editor.core.model.SwitchParam || it is com.valeton.editor.core.model.ComboBoxParam }
+        }
+        val opt = def.params.first { it is com.valeton.editor.core.model.SwitchParam || it is com.valeton.editor.core.model.ComboBoxParam }
+        val ids = when (opt) {
+            is com.valeton.editor.core.model.SwitchParam -> opt.options.map { it.id }
+            is com.valeton.editor.core.model.ComboBoxParam -> opt.options.map { it.id }
+            else -> emptyList()
+        }
+        val block = def.module.slotIndex
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        val slots = (0..10).map { i -> if (i == block) EffectSlot(i, def.effectId, true) else EffectSlot(i, 0, true) }
+        vm.loadPreset(GP200Preset(patchName = "X", effects = slots, routingOrder = (0..10).toList()))
+        val before = vm.uiState.value.preset!!.effects.single { it.slotIndex == block }.params[opt.index]
+
+        val bad = (ids.maxOrNull() ?: 0) + 7
+        vm.applyBlockPreset(block, def.effectId, List(15) { if (it == opt.index) bad.toFloat() + 0.3f else 0f })
+
+        assertEquals(before, vm.uiState.value.preset!!.effects.single { it.slotIndex == block }.params[opt.index])
+        assertTrue(midi.params.none { it[1] == opt.index })
+    }
+
+    @Test
+    fun `applyBlockPreset com troca de modelo envia o padrao da opcao invalida`() {
+        val def = com.valeton.editor.core.catalog.EffectCatalog.getAllEffects().first { d ->
+            d.params.any { it is com.valeton.editor.core.model.SwitchParam || it is com.valeton.editor.core.model.ComboBoxParam } &&
+                com.valeton.editor.core.catalog.EffectCatalog.getEffectsByModule(d.module).size > 1
+        }
+        val opt = def.params.first { it is com.valeton.editor.core.model.SwitchParam || it is com.valeton.editor.core.model.ComboBoxParam }
+        val other = com.valeton.editor.core.catalog.EffectCatalog.getEffectsByModule(def.module).first { it.effectId != def.effectId }
+        val block = def.module.slotIndex
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        val slots = (0..10).map { i -> if (i == block) EffectSlot(i, other.effectId, true) else EffectSlot(i, 0, true) }
+        vm.loadPreset(GP200Preset(patchName = "X", effects = slots, routingOrder = (0..10).toList()))
+
+        vm.applyBlockPreset(block, def.effectId, List(15) { if (it == opt.index) 9999f else 0f })
+
+        val applied = vm.uiState.value.preset!!.effects.single { it.slotIndex == block }.params[opt.index]
+        assertEquals(opt.defaultValue, applied)
+        assertTrue(midi.params.contains(listOf(block, opt.index, def.effectId, opt.defaultValue)))
+    }
 }

@@ -48,9 +48,12 @@ fun StudioPedalEditorScreen(
     onToggle: () -> Unit,
     onChangeEffect: (Int) -> Unit,
     onParamChange: (paramIndex: Int, value: Float) -> Unit,
+    onApplyBlockPreset: (effectId: Int, params: List<Float>) -> Unit = { _, _ -> },
+    busy: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var showEffectPicker by remember { mutableStateOf(false) }
+    var showBlockPresets by remember { mutableStateOf(false) }
     var showEffectInfo by remember(slot.effectId) { mutableStateOf(false) }
 
     val effectDef: EffectDefinition? = EffectCatalog.getEffectById(slot.effectId)
@@ -85,6 +88,7 @@ fun StudioPedalEditorScreen(
     }
 
     val scrollState = rememberScrollState()
+    val blockPresetsRepo = rememberBlockPresetsRepository()
 
     Column(
         modifier = modifier
@@ -93,7 +97,7 @@ fun StudioPedalEditorScreen(
             .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        // 1. Editor Head [‹ CHAIN      DST · 3/11]
+        // 1. Editor Head [‹ CADEIA      DST · 3/11   [PRESETS]]
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -103,11 +107,13 @@ fun StudioPedalEditorScreen(
         ) {
             Box(
                 modifier = Modifier
+                    .heightIn(min = 36.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(StudioPalette.SurfaceRaised)
                     .border(1.dp, StudioPalette.Border, RoundedCornerShape(6.dp))
                     .clickable(onClick = onBack)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = "‹ CADEIA",
@@ -119,13 +125,37 @@ fun StudioPedalEditorScreen(
                 )
             }
 
-            Text(
-                text = "${module.code} · ${index + 1}/$chainLength",
-                color = StudioPalette.TextMuted,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "${module.code} · ${index + 1}/$chainLength",
+                    color = StudioPalette.TextMuted,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                )
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 36.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(StudioPalette.SurfaceRaised)
+                        .border(1.dp, StudioPalette.Accent.copy(alpha = 0.55f), RoundedCornerShape(6.dp))
+                        .clickable { showBlockPresets = true }
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "PRESETS",
+                        color = StudioPalette.Accent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -527,6 +557,18 @@ fun StudioPedalEditorScreen(
             showEffectPicker = false
         },
         onDismiss = { showEffectPicker = false }
+    )
+
+    BlockPresetsSheet(
+        isOpen = showBlockPresets,
+        module = module,
+        slot = slot,
+        busy = busy,
+        repository = blockPresetsRepo,
+        onApplyPreset = { preset ->
+            onApplyBlockPreset(preset.effectId, preset.params)
+        },
+        onDismiss = { showBlockPresets = false }
     )
 
     if (showEffectInfo && effectDef != null) {
