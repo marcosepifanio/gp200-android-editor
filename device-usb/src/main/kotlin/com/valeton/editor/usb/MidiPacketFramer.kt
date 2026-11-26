@@ -45,9 +45,17 @@ class MidiPacketFramer(
         }
     }
 
-    suspend fun sendImmediate(bytes: ByteArray) {
+    /**
+     * Sends [bytes] now. With [settleParams], the next queued parameter waits one interval, so a parameter for a
+     * freshly selected model does not follow the model change back to back (defensive spacing, not yet measured
+     * on hardware).
+     */
+    suspend fun sendImmediate(bytes: ByteArray, settleParams: Boolean = false) {
         onSendBytes(bytes)
+        if (settleParams) settleBeforeNextParam = true
     }
+
+    @Volatile private var settleBeforeNextParam = false
 
     private fun launchPacingLoop(): Job = coroutineScope.launch {
         while (isActive) {
@@ -61,6 +69,10 @@ class MidiPacketFramer(
             }
 
             if (nextUpdate == null) break
+            if (settleBeforeNextParam) {
+                settleBeforeNextParam = false
+                delay(intervalMs)
+            }
 
             val msg = SysExCodec.buildParamChange(
                 nextUpdate.blockIndex,

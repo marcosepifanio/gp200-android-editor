@@ -2217,6 +2217,19 @@ class PresetViewModelTest {
     }
 
     @Test
+    fun `applyBlockPreset no mesmo modelo nao reenvia parametros iguais`() {
+        val midi = FakeMidiManager()
+        val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))
+        vm.loadPreset(tunedAmpPreset(com.valeton.editor.core.model.QuickKnobAssignment.OFF))
+
+        // Só o índice 2 difere do estado atual (80, 0, 0, 0, 0, 30).
+        vm.applyBlockPreset(3, 117440554, p15(80f, 0f, 7f, 0f, 0f, 30f))
+
+        assertEquals(listOf(listOf(3, 2, 117440554, 7f)), midi.params)
+        assertEquals(7f, vm.uiState.value.preset!!.effects.single { it.slotIndex == 3 }.params[2])
+    }
+
+    @Test
     fun `applyBlockPreset de outro modelo troca e desliga knob sem o parametro`() {
         val midi = FakeMidiManager()
         val vm = PresetViewModel(midi, coroutineScope = CoroutineScope(Dispatchers.Unconfined))

@@ -10,6 +10,8 @@ import java.io.File
 /** Ajustes salvos de um tipo de bloco: modelo e os 15 parâmetros. Não guarda ligado/desligado nem K1–K3/CTRL. */
 data class BlockPreset(val name: String, val effectId: Int, val params: List<Float>)
 
+data class BlockPresetsSnapshot(val presets: List<BlockPreset>, val damaged: Boolean)
+
 sealed interface BlockPresetResult {
     data class Ok(val presets: List<BlockPreset>) : BlockPresetResult
     data object EmptyName : BlockPresetResult
@@ -43,6 +45,13 @@ class BlockPresetsRepository(private val storageDir: File) {
 
     @Synchronized
     fun list(module: ModuleType): List<BlockPreset> = sorted(readAll().first[module.code].orEmpty())
+
+    /** Lista do bloco e o estado de dano do arquivo numa única leitura (usado ao abrir a tela). */
+    @Synchronized
+    fun snapshot(module: ModuleType): BlockPresetsSnapshot {
+        val (all, damaged) = readAll()
+        return BlockPresetsSnapshot(sorted(all[module.code].orEmpty()), damaged)
+    }
 
     /** O arquivo tinha itens ilegíveis, valores inválidos ou nomes repetidos (ignorados ou corrigidos na leitura). */
     @Synchronized

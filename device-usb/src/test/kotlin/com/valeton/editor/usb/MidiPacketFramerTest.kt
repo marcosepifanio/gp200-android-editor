@@ -31,6 +31,34 @@ class MidiPacketFramerTest {
     }
 
     @Test
+    fun `parameter after a settling immediate message waits one interval`() = runTest {
+        val sent = mutableListOf<Pair<String, Long>>()
+        val effectMsg = byteArrayOf(0x01)
+        val pacer = MidiPacketFramer(coroutineScope = this, intervalMs = 40L) { msg ->
+            sent += (if (msg.contentEquals(effectMsg)) "effect" else "param") to testScheduler.currentTime
+        }
+
+        pacer.sendImmediate(effectMsg, settleParams = true)
+        pacer.sendParam(blockIndex = 3, paramIndex = 0, effectId = 100, value = 10f)
+        advanceTimeBy(100L)
+
+        assertEquals(listOf("effect", "param"), sent.map { it.first })
+        assertTrue(sent[1].second - sent[0].second >= 40L, "Param sent ${sent[1].second - sent[0].second}ms after the effect change")
+    }
+
+    @Test
+    fun `plain immediate message does not delay parameters`() = runTest {
+        val sent = mutableListOf<Long>()
+        val pacer = MidiPacketFramer(coroutineScope = this, intervalMs = 40L) { sent += testScheduler.currentTime }
+
+        pacer.sendImmediate(byteArrayOf(0x01))
+        pacer.sendParam(blockIndex = 3, paramIndex = 0, effectId = 100, value = 10f)
+        advanceTimeBy(100L)
+
+        assertEquals(listOf(0L, 0L), sent)
+    }
+
+    @Test
     fun `pacer coalesces rapid value changes for same block and param`() = runTest {
         var lastSentValue: Float? = null
         var sendCount = 0

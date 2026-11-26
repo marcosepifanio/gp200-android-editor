@@ -509,7 +509,7 @@ class AndroidMidiDriver internal constructor(
         pausePresetNamesScan()
         val msg = SysExCodec.buildEffectChange(blockIndex, effectId)
         coroutineScope.launch {
-            framer?.sendImmediate(msg)
+            framer?.sendImmediate(msg, settleParams = true)
         }
     }
 

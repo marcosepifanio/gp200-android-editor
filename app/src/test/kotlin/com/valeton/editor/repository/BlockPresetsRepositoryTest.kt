@@ -144,6 +144,17 @@ class BlockPresetsRepositoryTest {
         assertTrue(r.hasDamagedEntries())
         r.save(ModuleType.AMP, "Clean", uk45, params())
         assertTrue(File(dir, "block_presets.json.corrompido").readText().contains("Ruim"))
+        // A sheet assume que uma gravação bem-sucedida deixa o arquivo limpo.
+        assertFalse(r.hasDamagedEntries())
+    }
+
+    @Test fun snapshotReadsListAndDamageTogether() {
+        writeRaw("""{"version":1,"blocks":{
+            "AMP":[{"name":"Lead","effectId":$uk45,"params":[1]},{"name":"Ruim","effectId":$uk45,"params":[true]}]}}""")
+        val snap = repo().snapshot(ModuleType.AMP)
+        assertEquals(listOf("Lead"), snap.presets.map { it.name })
+        assertTrue(snap.damaged)
+        assertFalse(repo().snapshot(ModuleType.DLY).presets.any())
     }
 
     @Test fun cleanFileHasNoDamage() {

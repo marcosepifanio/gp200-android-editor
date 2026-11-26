@@ -51,6 +51,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -108,15 +113,18 @@ fun BlockPresetsSheet(
     if (!isOpen) return
 
     val userNames = LocalUserModelNames.current
-    var presets by remember(module, repository) { mutableStateOf(repository.list(module)) }
-    var damaged by remember(module, repository) { mutableStateOf(repository.hasDamagedEntries()) }
+    // Uma leitura ao abrir; depois, cada gravação devolve a lista nova.
+    val initial = remember(module, repository) { repository.snapshot(module) }
+    var presets by remember(initial) { mutableStateOf(initial.presets) }
+    var damaged by remember(initial) { mutableStateOf(initial.damaged) }
     var dialog by remember { mutableStateOf<BlockPresetDialog?>(null) }
     var dialogError by remember { mutableStateOf<String?>(null) }
 
     fun applyResult(result: BlockPresetResult): Boolean {
         if (result is BlockPresetResult.Ok) {
             presets = result.presets
-            damaged = repository.hasDamagedEntries()
+            // Uma gravação bem-sucedida reescreve o arquivo inteiro já limpo.
+            damaged = false
             dialogError = null
             return true
         }
@@ -443,7 +451,12 @@ private fun PresetNameDialog(
     onConfirm: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var text by remember(initialName) { mutableStateOf(initialName) }
+    // Nome sugerido já selecionado: digitar substitui em vez de misturar com o texto existente.
+    var field by remember(initialName) {
+        mutableStateOf(TextFieldValue(initialName, selection = TextRange(0, initialName.length)))
+    }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = StudioPalette.SurfaceRaised,
@@ -451,8 +464,11 @@ private fun PresetNameDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it.take(BlockPresetRules.MAX_NAME) },
+                    value = field,
+                    onValueChange = { v ->
+                        field = if (v.text.length <= BlockPresetRules.MAX_NAME) v
+                        else v.copy(text = v.text.take(BlockPresetRules.MAX_NAME), selection = TextRange(BlockPresetRules.MAX_NAME))
+                    },
                     singleLine = true,
                     label = { Text("Nome (máx ${BlockPresetRules.MAX_NAME})") },
                     colors = OutlinedTextFieldDefaults.colors(
@@ -461,7 +477,7 @@ private fun PresetNameDialog(
                         focusedBorderColor = StudioPalette.Accent,
                         unfocusedBorderColor = StudioPalette.Border
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
                 )
                 if (error != null) {
                     Text(error, color = StudioPalette.AccentRed, fontSize = 12.sp)
@@ -470,7 +486,7 @@ private fun PresetNameDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(text) },
+                onClick = { onConfirm(field.text) },
                 colors = ButtonDefaults.buttonColors(containerColor = StudioPalette.Accent, contentColor = StudioPalette.Case)
             ) { Text(confirmLabel, fontWeight = FontWeight.Bold) }
         },

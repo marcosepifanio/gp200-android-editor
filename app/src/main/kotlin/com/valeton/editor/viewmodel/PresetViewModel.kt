@@ -718,6 +718,8 @@ class PresetViewModel(
                 if (modelChanges) sent += p.index to values[p.index]
                 return@forEach
             }
+            // Mesmo modelo: a pedaleira já tem o valor atual, só reenvia o que muda.
+            if (!modelChanges && values[p.index] == v) return@forEach
             values[p.index] = v
             sent += p.index to v
         }
