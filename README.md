@@ -26,7 +26,7 @@ Este projeto não é um produto oficial da Valeton e não declara afiliação ou
     <td colspan="2" align="center"><img src="docs/images/sobre.png" width="260" alt="Aba Sobre com ícone próprio, versão do app, aviso de aplicativo não oficial da Valeton e créditos"><br><b>Sobre</b><br>Versão, aviso de independência, créditos e código-fonte.</td>
   </tr>
   <tr>
-    <td colspan="3" align="center"><img src="docs/images/selecao-favoritos.png" width="300" alt="Seletor de efeitos com a aba Favoritos visível e um amplificador marcado"><br><b>Efeitos favoritos</b><br>Marque modelos com a estrela e filtre os favoritos do bloco atual.</td>
+    <td colspan="3" align="center"><img src="docs/images/selecao-favoritos.png" width="300" alt="Seletor de efeitos com a aba Favoritos visível e dois amplificadores marcados"><br><b>Efeitos favoritos</b><br>Marque modelos com a estrela e filtre os favoritos do bloco atual.</td>
   </tr>
   <tr>
     <td align="center"><img src="docs/images/cadeia-arrastar.png" width="260" alt="Cadeia de sinal com o card do B-Wah destacado ao ser segurado pela alça e os marcadores FX Send e FX Return com setas"><br><b>Reordenar a cadeia</b><br>Segure a alça e arraste o card; mova o FX Send e o FX Return com as setas.</td>
