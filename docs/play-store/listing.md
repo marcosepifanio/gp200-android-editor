@@ -111,6 +111,12 @@ Arraste os cards para reordenar a cadeia e mova o FX Send e o FX Return com as s
 Opções de efeitos que não cabiam na tela agora passam para a linha de baixo, como o Midrange do Classic Bass. Ao segurar a alça de um efeito na cadeia, o card fica destacado antes de você arrastar.
 ```
 
+- **Notas da versão (pt-BR)** para 1.0.10 (19):
+
+```
+Presets por bloco: no editor, toque em PRESETS para guardar e aplicar ajustes de cada efeito. A biblioteca é sincronizada a cada conexão com a pedaleira. Visual com mais contraste e controles maiores.
+```
+
 - Peça aos testadores para informar o modelo da pedaleira (GP-200, LT, JR…) e a versão do firmware ao relatar problemas.
 
 ## Pendências antes da produção

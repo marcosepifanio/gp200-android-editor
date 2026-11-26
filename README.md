@@ -2,7 +2,7 @@
 
 Editor independente de presets para pedaleiras Valeton GP-200, feito para Android com Kotlin, Jetpack Compose e Material 3. Conecte a pedaleira por USB MIDI para editar efeitos, organizar presets e controlar os ritmos pelo celular.
 
-**Versão atual do projeto: 1.0.9.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
+**Versão atual do projeto: 1.0.10.** A publicação 1.0.0 disponibilizou o código-fonte; esta revisão não inclui APK oficial para download. O mantenedor informou que o teste físico das novas associações CTRL terminou corretamente. Modelo e firmware desse teste não foram registrados; outras variantes precisam de validação própria.
 
 O app não acessa a internet nem coleta dados pessoais; veja a [política de privacidade](docs/privacy-policy.md).
 
@@ -37,10 +37,14 @@ Este projeto não é um produto oficial da Valeton e não declara afiliação ou
     <td align="center"><img src="docs/images/descricao-efeito.png" width="260" alt="Diálogo do Tape Delay S com a arte do pedal, a categoria Delay e a descrição baseado em Roland RE-201 Space Echo"><br><b>Descrição do efeito</b><br>Toque no ícone ao lado do nome para ver a arte e a descrição completa.</td>
     <td align="center"><img src="docs/images/nomes-completos.png" width="260" alt="Knobs do Tape Delay S com o rótulo Wow e Flutter em duas linhas"><br><b>Nomes completos</b><br>Rótulos longos dos knobs quebram em duas linhas em vez de serem cortados.</td>
     <td align="center"><img src="docs/images/fonte-grande.png" width="260" alt="Cadeia de sinal com a fonte do sistema em 130 por cento e a aba Controles inteira na barra inferior"><br><b>Fonte grande</b><br>Com a fonte do sistema ampliada, textos e abas continuam inteiros.</td>
+  <tr>
+    <td align="center"><img src="docs/images/presets-bloco.png" width="260" alt="Painel Presets do DLY com quatro presets salvos e o Slapback marcado como o ajuste atual do bloco"><br><b>Presets por bloco</b><br>Guarde o modelo e os parâmetros do bloco com um nome.</td>
+    <td align="center"><img src="docs/images/presets-bloco-acoes.png" width="260" alt="Menu de um preset de bloco com as opções Aplicar, Substituir pelo atual, Renomear e Excluir"><br><b>Gerenciar presets</b><br>Aplique, substitua, renomeie ou exclua um preset salvo.</td>
+    <td align="center"><img src="docs/images/presets-bloco-aplicado.png" width="260" alt="Editor do 999 Echo depois de aplicar o preset Eco longo, com Mix 30 e Feedback 70"><br><b>Preset aplicado</b><br>Os valores do preset vão para o bloco e o patch fica pendente de salvar.</td>
   </tr>
 </table>
 
-As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As capturas de reordenação da cadeia, das opções do Classic Bass e do diálogo de salvar em outro slot são da versão 1.0.8, e as da descrição do efeito, dos nomes completos e da fonte grande (130%) são da versão 1.0.9, todas no emulador offline; por isso o botão **Salvar na pedaleira** aparece desabilitado. As imagens não representam uma conexão MIDI ativa.
+As capturas de conexão, cadeia, editor de efeitos, presets, ritmos e sobre são da versão 1.0.0, feitas em emulador no **modo offline**. As telas de edição e seleção de AMP e a de Controles mostram a versão 1.0.1 após importar o fixture `01-A CTRL - TEST.prst`. A captura do seletor com favoritos mostra a versão 1.0.2 no emulador offline. As capturas de reordenação da cadeia, das opções do Classic Bass e do diálogo de salvar em outro slot são da versão 1.0.8; as da descrição do efeito, dos nomes completos e da fonte grande (130%) são da versão 1.0.9; e as dos presets por bloco são da versão 1.0.10, todas no emulador offline. Nas versões anteriores à 1.0.10 o botão **Salvar na pedaleira** aparece desabilitado; nas dos presets por bloco ele aparece destacado porque o patch tem alterações pendentes, mas sem pedaleira conectada não há gravação. As imagens não representam uma conexão MIDI ativa.
 
 ## Recursos
 
